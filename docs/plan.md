@@ -1,6 +1,6 @@
 ## **Data**
 
-- **Soil Moisture (Backend)**
+- **Soil Moisture**
 - **Water Tank Status** (Threshold Reached or Not)
 
 ## **API and Format**
@@ -79,17 +79,17 @@ POST /update-led
             "state": "BOOLEAN"          // LED ON/OFF state
         }
     ],
-    "weather": ["MUA", "MUA_SAM", "NANG"]  // Weather conditions (e.g., "Rain", "Thunderstorm", "Sunny")
+    "weather": ["RAIN", "THURNDERSTORM", "SUNNY"]  // Weather conditions (e.g., "Rain", "Thunderstorm", "Sunny")
 }
 ```
 
 ### **4. Irrigation Mode Control**
 
-#### **Update Irrigation Mode**
+#### **Update Watering Mode**
 ```http
-POST /update-irrigation-mode
+POST /update-watering-mode
 {
-    "duy_tri": "BOOLEAN"   // Maintain irrigation mode (true/false)
+    // TODO!
 }
 ```
 
@@ -98,8 +98,7 @@ POST /update-irrigation-mode
 ### **1. Weather Data**
 ```json
 {
-    "temp": "NUMBER",    // Temperature value
-    "humid": "NUMBER"    // Humidity value
+    // TODO!
 }
 ```
 
