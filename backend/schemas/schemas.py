@@ -1,0 +1,144 @@
+from datetime import datetime, time
+from typing import List, Optional
+
+from pydantic import BaseModel, constr
+
+
+class LoginRequest(BaseModel):
+    # pin: constr(min_length=4, max_length=4, pattern=r'^\d{4}$')
+    pin: constr(min_length=4, max_length=4, pattern=r'^\d{4}$')
+
+
+class ChangePassword(BaseModel):
+    pin: constr(min_length=4, max_length=4, pattern=r'^\d{4}$')
+    new_pin: constr(min_length=4, max_length=4, pattern=r'^\d{4}$')
+
+
+class MoistureReadingBase(BaseModel):
+    timestamp: datetime
+    moisture_level: float
+
+
+class MoistureReadingCreate(MoistureReadingBase):
+    pass
+
+
+class MoistureReading(MoistureReadingBase):
+    id: int
+    plant_id: int
+
+    class Config:
+        orm_mode: True
+
+
+class PlantBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class PlantCreate(PlantBase):
+    pass
+
+
+class Plant(PlantBase):
+    id: int
+    moisture_readings: List[MoistureReading] = []
+    config: Optional['Config'] = None
+    led: Optional['Led'] = None
+    watering: Optional['Watering'] = None
+
+    class Config:
+        orm_mode: True
+        arbitrary_types_allowed = True  # Cho phép kiểu dữ liệu tùy chỉnh
+
+
+class WeatherBase(BaseModel):
+    timestamp: datetime
+    condition: str
+    temperature: float
+    humidity: float
+
+
+class WeatherCreate(WeatherBase):
+    pass
+
+
+class Weather(WeatherBase):
+    id: int
+
+    class Config:
+        orm_mode: True
+
+
+class ConfigBase(BaseModel):
+    hash_password: str
+    real_time_position: str
+    led_mode: str
+    operation_mode: str
+
+
+class ConfigCreate(ConfigBase):
+    pass
+
+
+class Config(ConfigBase):
+    id: int
+    plant_id: int
+
+    class Config:
+        orm_mode: True
+
+
+class LedBase(BaseModel):
+    name: str
+    brightness: float
+    color: str
+    is_on: bool
+
+
+class LedCreate(LedBase):
+    pass
+
+
+class Led(LedBase):
+    id: int
+    plant_id: int
+
+    class Config:
+        orm_mode: True
+
+
+class WateringScheduleBase(BaseModel):
+    watering_time: time
+    watering_duration: int
+
+
+class WateringScheduleCreate(WateringScheduleBase):
+    pass
+
+
+class WateringSchedule(WateringScheduleBase):
+    id: int
+    watering_id: int
+
+    class Config:
+        orm_mode: True
+
+
+class WateringBase(BaseModel):
+    watering_mode: str
+    watering_threshold: float
+    watering_duration: int
+
+
+class WateringCreate(WateringBase):
+    pass
+
+
+class Watering(WateringBase):
+    id: int
+    plant_id: int
+    watering_schedule: List[WateringSchedule] = []
+
+    class Config:
+        orm_mode: True
