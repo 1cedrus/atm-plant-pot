@@ -1,16 +1,15 @@
 from fastapi import FastAPI
 
-# from . import models
+import mqtt
 from database import engine, SessionLocal, Base
 from db_init import init_db
 from routers import user
 
-app = FastAPI()
-
+app = FastAPI(lifespan=mqtt.lifespan)
 app.include_router(user.router)
+app.include_router(mqtt.router)
 
 # Tạo các bảng
-# models.Base.metadata.create_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 
@@ -27,10 +26,5 @@ init()
 
 
 @app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+def home():
+    return {"Hello": "World"}
