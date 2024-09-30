@@ -41,9 +41,9 @@ extern uint8_t bl_cloud;
 extern LEDsMode led_mode;
 
 // <sun|cloud>,<red>,<green>,<blue>,<brightness>
-extern char* led_custom_topic;
+extern const char* LED_CUSTOM_TOPIC;
 
 // <realtime|adaptive|custom>
-extern char* led_mode_topic;
+extern const char* LED_MODE_TOPIC;
 
 #endif

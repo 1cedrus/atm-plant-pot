@@ -16,10 +16,10 @@ uint8_t gl_cloud = 255;
 uint8_t bl_cloud = 255;
 
 // <sun|cloud>,<red>,<green>,<blue>,<brightness>
-char* led_custom_topic = "cmnd/led/custom";
+const char* LED_CUSTOM_TOPIC = "cmnd/led/custom";
 
 // <realtime|adaptive|custom>
-char* led_mode_topic = "cmnd/led/mode";
+const char* LED_MODE_TOPIC = "cmnd/led/mode";
 
 void setupLEDs() {
   pinMode(RP_SUN, OUTPUT);

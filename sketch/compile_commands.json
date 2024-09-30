@@ -1,0 +1,7 @@
+[
+    {
+        "command": "arduino-cli compile --fqbn arduino:avr:uno ./src",
+        "file": "main.ino"
+    }
+]
+
