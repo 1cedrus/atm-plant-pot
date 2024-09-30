@@ -8,3 +8,12 @@ export enum LedMode {
   Realtime = 'realtime',
   Adaptive = 'adaptive',
 }
+
+export interface LEDSettings {
+  red: number;
+  blue: number;
+  green: number;
+  brightness: number;
+  duration: number;
+}
+

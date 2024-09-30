@@ -10,6 +10,20 @@ export const login = async (pin: string) => {
   });
 };
 
+export const water = async () => {
+  return axios({
+    method: 'get',
+    url: '/api/water',
+  });
+}
+
+export const stopWater = async () => {
+  return axios({
+    method: 'get',
+    url: '/api/stop-water',
+  });
+}
+
 export const changePassword = async (oldPin: string, newPin: string) => {
   return axios({
     method: 'post',
@@ -82,3 +96,4 @@ export const setLedMode = async (mode: string) => {
     },
   });
 };
+
