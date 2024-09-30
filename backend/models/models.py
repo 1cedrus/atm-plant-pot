@@ -1,10 +1,24 @@
 import datetime
-
+from passlib.context import CryptContext
+import hashlib
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean, Time
 from sqlalchemy.orm import relationship
+from database.database import Base
 
-from database import Base
-from utils import hash_password
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_md5(input_string: str) -> str:
+    # Mã hóa chuỗi đầu vào thành bytes
+    input_bytes = input_string.encode('utf-8')
+    # Tạo đối tượng hash MD5
+    md5_hash = hashlib.md5(input_bytes)
+    # Trả về giá trị hash dưới dạng chuỗi hex
+    return md5_hash.hexdigest()
+
+
+def hash_password(password: str) -> str:
+    return hash_md5(password)
 
 
 class Plant(Base):

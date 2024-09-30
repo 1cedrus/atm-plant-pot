@@ -1,17 +1,8 @@
 from datetime import datetime, time
 from typing import List, Optional
 
-from pydantic import BaseModel, constr
+from pydantic import BaseModel
 
-
-class LoginRequest(BaseModel):
-    # pin: constr(min_length=4, max_length=4, pattern=r'^\d{4}$')
-    pin: constr(min_length=4, max_length=4, pattern=r'^\d{4}$')
-
-
-class ChangePassword(BaseModel):
-    pin: constr(min_length=4, max_length=4, pattern=r'^\d{4}$')
-    new_pin: constr(min_length=4, max_length=4, pattern=r'^\d{4}$')
 
 
 class MoistureReadingBase(BaseModel):

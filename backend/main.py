@@ -1,13 +1,16 @@
 from fastapi import FastAPI
 
 import mqtt
-from database import engine, SessionLocal, Base
-from db_init import init_db
-from routers import user
+import ws
+from database.database import engine, SessionLocal, Base
+from database.db_init import init_db
+from routers import user, mqtt_router, routers
 
 app = FastAPI(lifespan=mqtt.lifespan)
 app.include_router(user.router)
-app.include_router(mqtt.router)
+app.include_router(mqtt_router.router)
+app.include_router(routers.router)
+app.include_router(ws.router)
 
 # Tạo các bảng
 Base.metadata.create_all(bind=engine)

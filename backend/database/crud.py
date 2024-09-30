@@ -1,7 +1,12 @@
-from sqlalchemy.orm import Session
+from datetime import datetime
 
-from .models.models import Plant, MoistureReading, Weather, Config, Led
-from .schemas.schemas import PlantCreate, MoistureReadingCreate, WeatherCreate, ConfigCreate, LedCreate
+from fastapi.params import Depends
+from sqlalchemy.orm import Session
+from sqlalchemy.testing.plugin.plugin_base import config
+
+from database.database import get_db
+from models.models import Plant, MoistureReading, Weather, Config, Led, Watering
+from schemas.schemas import PlantCreate, MoistureReadingCreate, WeatherCreate, ConfigCreate, LedCreate
 
 
 # Plant CRUD operations
@@ -33,6 +38,8 @@ def create_moisture_reading(db: Session, reading: MoistureReadingCreate, plant_i
 def get_moisture_readings(db: Session, skip: int = 0, limit: int = 10):
     return db.query(MoistureReading).offset(skip).limit(limit).all()
 
+def get_moisture_readings_in_range(db: Session, plant_id: int ,from_: datetime, to: datetime):
+    return db.query(MoistureReading).filter(MoistureReading.plant_id == plant_id, MoistureReading.timestamp >= from_, MoistureReading.timestamp <= to).all()
 
 # Weather CRUD operations
 def create_weather(db: Session, weather: WeatherCreate):
@@ -56,8 +63,8 @@ def create_config(db: Session, config: ConfigCreate, plant_id: int):
     return db_config
 
 
-def get_configs(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(Config).offset(skip).limit(limit).all()
+def get_config(db: Session):
+    return db.query(Config).first()
 
 
 # Led CRUD operations
@@ -71,3 +78,7 @@ def create_led(db: Session, led: LedCreate, plant_id: int):
 
 def get_leds(db: Session, skip: int = 0, limit: int = 10):
     return db.query(Led).offset(skip).limit(limit).all()
+
+def get_watering(db: Session, plant_id: int):
+    return db.query(Watering).filter(Watering.plant_id == plant_id).first()
+

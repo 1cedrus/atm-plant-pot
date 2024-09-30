@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from database import get_db
-from models.models import Config
-from schemas.schemas import LoginRequest, ChangePassword
-from utils import create_access_token, hash_password, verify_token
+from database.database import get_db
+from models.models import Config, hash_password
+from schemas.users_chemas import LoginRequest, ChangePassword
+from utils import create_access_token, pin_authenticate
 
-router = APIRouter()
+router = APIRouter(prefix="/api")
 
 
 @router.post("/login/", tags=["login"])
@@ -22,13 +22,12 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/change-password/", tags=["change password"])
-async def change_password(request: ChangePassword, db: Session = Depends(get_db), pin: str = Depends(verify_token)):
-    config = db.query(Config).first()
-    if not config or config.hash_password != pin or config.hash_password != hash_password(request.pin):
+async def change_password(request: ChangePassword, db: Session = Depends(get_db), config: Config = Depends(pin_authenticate)):
+    if config.hash_password != hash_password(request.oldPin):
         raise HTTPException(
-            status_code=401,
-            detail="Invalid PIN"
+            status_code=400,
+            detail="Wrong PIN"
         )
-    config.hash_password = hash_password(request.new_pin)
+    config.hash_password = hash_password(request.newPin)
     db.commit()
     return {"message": "Change password successfully"}
