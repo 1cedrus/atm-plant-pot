@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <Preferences.h>
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
@@ -11,12 +12,11 @@
 
 LED sun({16, 17, 18});
 LED cloud({35, 36, 37});
+Threshold toWater = DEFAULT_THRESHOLD;
 
-#define PUBLISH_SOIL_MOISTURE_DURATION 2000 
-#define PUBLISH_WATER_LEVEL_DURATION 5000
-#define SOIL_MOISTURE_PIN 13
-#define WATER_LEVEL_PIN 14
-#define WATER_PUMP_PIN 15
+// Default set as AUTOMATIC
+Mode wateringMode = AUTOMATIC;
+TaskHandle_t autoWaterTask = NULL;
 
 QueueHandle_t messageQueue;
 WiFiClient espClient;
@@ -26,6 +26,10 @@ void setup() {
   Serial.begin(9600);
   ensureConnection();
 
+  preferences.begin("app", false);
+  toWater = preferences.getUShort("threashold", DEFAULT_THRESHOLD);
+  preferences.end();
+
   pinMode(SOIL_MOISTURE_PIN, INPUT);
   pinMode(WATER_LEVEL_PIN, INPUT);
 
@@ -34,11 +38,14 @@ void setup() {
   client.setCallback(mqttCallback);
   client.subscribe(LED_CUSTOM_TOPIC, 1);
   client.subscribe(WATER_PUMP_TOPIC, 1);
+  client.subscribe(THRESHOLD_TOPIC, 1);
+  client.subscribe(SETTINGS_TOPIC, 1);
 
   xTaskCreatePinnedToCore(publishSoilMoisture, "PublishSoilMoisture", 2048, NULL, 1, NULL, 0);
   xTaskCreatePinnedToCore(publishWaterLevel, "PublisWaterLevel", 2048, NULL, 1, NULL, 0);
   xTaskCreatePinnedToCore(messageProcessor, "MessageProcessor", 2048, NULL, 2, NULL, 0);
   xTaskCreatePinnedToCore(mqttLoopTask, "MqttLoop", 2048, NULL, 1, NULL, 1);
+  xTaskCreate(autoWater, "AutoWater", 2048, &sun, 1, &autoWaterTask);
   xTaskCreate(
     [](void* pvParameters) {
         LED* led = static_cast<LED*>(pvParameters);
@@ -57,7 +64,7 @@ void setup() {
     }, 
     "LEDCloud", 
     2048, 
-    &cloud,  // Pass 'this' as the task parameter
+    &cloud,
     1, 
     NULL
   );
@@ -98,7 +105,7 @@ void messageProcessor(void* param) {
       char *token = strtok(msg.payload, &DELIMITER);
 
       for (payloadLength = 0; token != nullptr && payloadLength < 10; payloadLength += 1) {
-        payload[i] = atoi(token);
+        payload[payloadLength] = atoi(token);
         token = strtok(nullptr, &DELIMITER);
       }
 
@@ -106,6 +113,10 @@ void messageProcessor(void* param) {
         handler = ledCustom;
       } else if (strcmp(msg.topic, WATER_PUMP_TOPIC)) {
         handler = waterPump;
+      } else if (strcmp(msg.topic, THRESHOLD_TOPIC)) {
+        handler = threshold;
+      } else if (strcmp(msg.topic, SETTINGS_TOPIC)) {
+        handler = settings;
       }
 
       handler(payload, payloadLength);
@@ -143,6 +154,19 @@ void publishWaterLevel(void *_pvParameters) {
   }
 }
 
+void autoWater(void *_pvParameters) {
+  while (true) {
+    if (wateringMode != AUTOMATIC) continue;
+
+    int nSoilMoisture = analogRead(SOIL_MOISTURE_PIN);
+
+    digitalWrite(WATER_PUMP_PIN, nSoilMoisture < toWater ? HIGH : LOW);
+
+    // TODO! Need a different value.
+    vTaskDelay(PUBLISH_SOIL_MOISTURE_DURATION / portTICK_PERIOD_MS);  
+  }
+}
+
 void ledCustom(int payload[], int payloadLength) {
   if (payloadLength != 5) {
     Serial.print("\n[ERROR]: Payload format is not correct!");
@@ -163,3 +187,31 @@ void waterPump(int payload[], int payloadLength) {
   }
 }
 
+void threshold(int payload[], int payloadLength) {
+  if (payloadLength != 1) {
+    Serial.print("\n[ERROR]: Payload format is not correct!");
+  } else {
+    toWater = static_cast<Threshold>(payload[0]);
+
+    preferences.begin("app", false);
+    toWater = preferences.putUShort("threashold", toWater);
+    preferences.end();
+  }
+}
+
+void settings(int payload[], int payloadLength) {
+  if (payloadLength != 1) {
+    Serial.print("\n[ERROR]: Payload format is not correct!");
+  } else if (wateringMode != payload[0]) {
+    wateringMode = static_cast<Mode>(payload[0]);
+
+    switch (wateringMode) {
+      case AUTOMATIC:
+        vTaskResume(autoWaterTask);
+        break;
+      case MANUAL:
+        vTaskSuspend(autoWaterTask);
+        break;
+    }
+  }
+}

@@ -1,8 +1,10 @@
+#include "Preferences.h"
 #ifndef SETUP_H
 #define SETUP_H
 
 #include <WebServer.h>
 #include <PubSubClient.h>
+#include <Preferences.h>
 
 void webServerOn(const char* formToShow);
 void webServerOff(bool closeAPMode);
@@ -29,5 +31,6 @@ extern const char* _FORM;
 
 extern WebServer* server;
 extern PubSubClient client;
+extern Preferences preferences;
 
 #endif

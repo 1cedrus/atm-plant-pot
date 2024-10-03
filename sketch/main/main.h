@@ -1,5 +1,13 @@
+#include <stdint.h>
 #ifndef MAIN_H
 #define MAIN_H
+
+#define PUBLISH_SOIL_MOISTURE_DURATION 2000 
+#define PUBLISH_WATER_LEVEL_DURATION 5000
+#define SOIL_MOISTURE_PIN 13
+#define WATER_LEVEL_PIN 14
+#define WATER_PUMP_PIN 15
+#define DEFAULT_THRESHOLD 200
 
 struct Message {
   char topic[50];
@@ -13,10 +21,21 @@ const char* LED_CUSTOM_TOPIC = "cmnd/led/custom";
 const char* WATER_PUMP_TOPIC = "cmnd/water/pump";
 
 // Use to publish soil moisture to backend
-const char* SOIL_MOISTURE_TOPIC = "cmnd/soil-moisture";
+const char* SOIL_MOISTURE_TOPIC = "cmnd/soil-moisture/data";
 
 // Use to publish water level to backend
 const char* WATER_LEVEL_TOPIC = "cmnd/water/level";
+
+// Use to update threshold at mcu
+const char* THRESHOLD_TOPIC = "cmnd/soil-moisture/threshold";
+
+// Just now, use only to update watering mode
+const char* SETTINGS_TOPIC = "cmnd/settings";
+
+enum Mode {
+  MANUAL,
+  AUTOMATIC
+};
 
 const char DELIMITER = ',';
 
@@ -25,5 +44,6 @@ void mqttLoopTask(void* param);
 void messageProcessor(void* param);
 
 typedef void (*TopicHandler)(int[], int);
+typedef uint16_t Threshold;
 
 #endif
