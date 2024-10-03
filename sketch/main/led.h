@@ -3,6 +3,13 @@
 
 #include <cstdint>
 
+enum LEDMode {
+  ON,
+  // Don't no how to name it now! =))
+  STARLIGHT,
+  OFF,
+};
+
 struct Pins {
   uint8_t red;
   uint8_t green;
@@ -20,7 +27,7 @@ class LED {
     Pins _pins;
     Color _color;
     float _brightness_factor;
-    bool _state;
+    LEDMode _state;
   
   public: 
     LED(Pins pins);
@@ -28,10 +35,10 @@ class LED {
 
     void setColor(Color color);
     void setBrightness(float factor);
-    void setState(bool state);
+    void setState(LEDMode mode);
     Color getColor();
     float getBrightness();
-    bool getState(); 
+    LEDMode getState(); 
     void run(void *_pvParameters);
 };
 #endif

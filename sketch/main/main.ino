@@ -174,7 +174,7 @@ void ledCustom(int payload[], int payloadLength) {
     LED selectedLED = payload[0] == 0 ? sun : cloud;
 
     selectedLED.setColor({ payload[1], payload[2], payload[3] });
-    selectedLED.setState(payload[5]);
+    selectedLED.setState(static_cast<LEDMode>(payload[5]));
     selectedLED.setBrightness((float) payload[4] / 255);
   }
 }
