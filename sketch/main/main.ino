@@ -24,11 +24,14 @@ PubSubClient client(espClient);
 
 void setup() {
   Serial.begin(9600);
-  ensureConnection();
 
   preferences.begin("app", false);
   toWater = preferences.getUShort("threashold", DEFAULT_THRESHOLD);
   preferences.end();
+
+  // Just run at AUTOMATIC mode till smt get update by backend
+  xTaskCreate(autoWater, "AutoWater", 2048, &sun, 1, &autoWaterTask);
+  ensureConnection();
 
   pinMode(SOIL_MOISTURE_PIN, INPUT);
   pinMode(WATER_LEVEL_PIN, INPUT);
@@ -45,7 +48,6 @@ void setup() {
   xTaskCreatePinnedToCore(publishWaterLevel, "PublisWaterLevel", 2048, NULL, 1, NULL, 0);
   xTaskCreatePinnedToCore(messageProcessor, "MessageProcessor", 2048, NULL, 2, NULL, 0);
   xTaskCreatePinnedToCore(mqttLoopTask, "MqttLoop", 2048, NULL, 1, NULL, 1);
-  xTaskCreate(autoWater, "AutoWater", 2048, &sun, 1, &autoWaterTask);
   xTaskCreate(
     [](void* pvParameters) {
         LED* led = static_cast<LED*>(pvParameters);
@@ -77,7 +79,7 @@ void loop() {
 }
 
 void mqttLoopTask(void* param) {
-  while (client.state() == MQTT_CONNECTED) {
+  while (true) {
     client.loop();
   }
 
@@ -129,6 +131,11 @@ void publishSoilMoisture(void *_pvParameters) {
   int nLastTimeUpdate = 0;
 
   while (true) {
+    if (client.state() != MQTT_CONNECTED) {
+      vTaskDelay(WAIT_FOR_CONNECTION / portTICK_PERIOD_MS);  
+      continue;
+    }
+
     int nSoilMoisture = analogRead(SOIL_MOISTURE_PIN);
 
     if (nLastTimeUpdate != nSoilMoisture) {
@@ -144,6 +151,11 @@ void publishWaterLevel(void *_pvParameters) {
   bool bLastTimeUpdate = 0;
 
   while (true) {
+    if (client.state() != MQTT_CONNECTED) {
+      vTaskDelay(WAIT_FOR_CONNECTION / portTICK_PERIOD_MS);  
+      continue;
+    }
+
     bool bWaterLevel = digitalRead(WATER_LEVEL_PIN);
 
     if (bLastTimeUpdate != bWaterLevel) {

@@ -8,6 +8,7 @@
 #define WATER_LEVEL_PIN 14
 #define WATER_PUMP_PIN 15
 #define DEFAULT_THRESHOLD 200
+#define WAIT_FOR_CONNECTION 5000
 
 struct Message {
   char topic[50];
