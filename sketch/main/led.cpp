@@ -71,6 +71,7 @@ void LED::run(void *_pvParameters) {
 
         if (starCount == 0) {
           starCount = random(2);
+          vTaskDelay(random(1000, 5000) / portTICK_PERIOD_MS); 
         }
     }
 

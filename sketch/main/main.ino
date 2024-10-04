@@ -35,6 +35,7 @@ void setup() {
 
   pinMode(SOIL_MOISTURE_PIN, INPUT);
   pinMode(WATER_LEVEL_PIN, INPUT);
+  pinMode(WATER_PUMP_PIN, OUTPUT);
 
   messageQueue = xQueueCreate(20, sizeof(Message));
 
@@ -80,10 +81,17 @@ void loop() {
 
 void mqttLoopTask(void* param) {
   while (true) {
+    while (!client.connected()) {
+      // Just ensure plants not gonna die cuz lack of water =)
+      // It will be reset to user settings when the client reconnect
+      wateringMode = AUTOMATIC;
+      vTaskResume(autoWaterTask);
+
+      tryConnectToBrokerInFlash();
+    }
+
     client.loop();
   }
-
-  // TODO! What to do if WiFi or Client is disconnecting
 }
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
@@ -168,6 +176,7 @@ void publishWaterLevel(void *_pvParameters) {
 
 void autoWater(void *_pvParameters) {
   while (true) {
+    // Not put delay here on purpuse cuz this task get suspend when wateringMode == MANUAL
     if (wateringMode != AUTOMATIC) continue;
 
     int nSoilMoisture = analogRead(SOIL_MOISTURE_PIN);
