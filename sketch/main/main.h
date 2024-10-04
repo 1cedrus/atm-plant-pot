@@ -1,6 +1,7 @@
-#include <stdint.h>
 #ifndef MAIN_H
 #define MAIN_H
+
+#include <stdint.h>
 
 #define PUBLISH_SOIL_MOISTURE_DURATION 2000 
 #define PUBLISH_WATER_LEVEL_DURATION 5000
