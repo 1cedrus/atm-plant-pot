@@ -43,23 +43,6 @@ class Plant(PlantBase):
         arbitrary_types_allowed = True  # Cho phép kiểu dữ liệu tùy chỉnh
 
 
-class WeatherBase(BaseModel):
-    timestamp: datetime
-    condition: str
-    temperature: float
-    humidity: float
-
-
-class WeatherCreate(WeatherBase):
-    pass
-
-
-class Weather(WeatherBase):
-    id: int
-
-    class Config:
-        orm_mode: True
-
 
 class ConfigBase(BaseModel):
     hash_password: str
@@ -83,8 +66,10 @@ class Config(ConfigBase):
 class LedBase(BaseModel):
     name: str
     brightness: float
-    color: str
-    is_on: bool
+    red: int
+    green: int
+    blue: int
+    state: int
 
 
 class LedCreate(LedBase):

@@ -20,8 +20,8 @@ def init_db(db: Session):
     leds = db.query(Led).all()
     if len(leds) < 4:
         for i in range(4 - len(leds)):
-            default_led = LedCreate(name=f"led_{i + 1}", brightness=0.0, color="white", is_on=False)
-            db_led = Led(**default_led.dict(), plant_id=db_plant.id)
+            default_led = LedCreate(name=f"led_{i + 1}", red=0, green=0, blue=0, brightness=0, state=0)
+            db_led = Led(**default_led.model_dump(), plant_id=db_plant.id)
             db.add(db_led)
         db.commit()
 
@@ -29,6 +29,6 @@ def init_db(db: Session):
     if not my_config:
         default_config = ConfigCreate(real_time_position="0,0", led_mode="auto", operation_mode="ADAPTIVE",
                                       hash_password=hash_password("1234"))
-        db_config = Config(**default_config.dict(), plant_id=db_plant.id)
+        db_config = Config(**default_config.model_dump(), plant_id=db_plant.id)
         db.add(db_config)
         db.commit()

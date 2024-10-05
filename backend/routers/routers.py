@@ -38,14 +38,14 @@ async def get_watering_mode(config: Config = Depends(pin_authenticate), db: Sess
         raise HTTPException(status_code=404, detail="Watering not found")
     return {"watering_mode": watering.watering_mode}
 
-@router.post("/watering-mode", tags=["watering mode"])
-async def update_watering_mode(request: UpdateWateringMode, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
-    watering = get_watering(db, config.plant_id)
-    if not watering:
-        raise HTTPException(status_code=404, detail="Watering not found")
-    watering.watering_mode = request.mode
-    db.commit()
-    return {"message": "success change watering mode to " + request.mode}
+# @router.post("/watering-mode", tags=["watering mode"])
+# async def update_watering_mode(request: UpdateWateringMode, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
+#     watering = get_watering(db, config.plant_id)
+#     if not watering:
+#         raise HTTPException(status_code=404, detail="Watering not found")
+#     watering.watering_mode = request.mode
+#     db.commit()
+#     return {"message": "success change watering mode to " + request.mode}
 
 @router.post("/test", tags=["test"])
 async def test(rq: Request):
@@ -56,8 +56,8 @@ async def test(rq: Request):
 async def get_led_mode(config: Config = Depends(pin_authenticate)):
     return {"led_mode": config.led_mode}
 
-@router.post("/led-mode", tags=["led mode"])
-async def update_led_mode(request: UpdateLedMode, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
-    config.led_mode = request.mode
-    db.commit()
-    return {"message": "success change led mode to " + request.mode}
+# @router.post("/led-mode", tags=["led mode"])
+# async def update_led_mode(request: UpdateLedMode, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
+#     config.led_mode = request.mode
+#     db.commit()
+#     return {"message": "success change led mode to " + request.mode}

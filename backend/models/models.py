@@ -44,15 +44,15 @@ class MoistureReading(Base):
 
     plant = relationship("Plant", back_populates="moisture_readings")
 
-
-class Weather(Base):
-    __tablename__ = "weather"
+class WaterLevel(Base):
+    __tablename__ = "water_level"
 
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
-    condition = Column(String)  # nắng, mưa, sấm chớp, v.v.
-    temperature = Column(Float)
-    humidity = Column(Float)
+    water_level = Column(Integer, default=1)
+    plant_id = Column(Integer, ForeignKey("plants.id"))
+
+    plant = relationship("Plant", back_populates="water_level")
 
 
 class Config(Base):
@@ -74,8 +74,10 @@ class Led(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, default="led")
     brightness = Column(Float, default=0.0)
-    color = Column(String, default="white")
-    is_on = Column(Boolean, default=False)
+    red = Column(Integer, default=0)
+    green = Column(Integer, default=0)
+    blue = Column(Integer, default=0)
+    state = Column(Integer, default=0)
     plant_id = Column(Integer, ForeignKey("plants.id"))
 
     plant = relationship("Plant", back_populates="led")
@@ -96,7 +98,7 @@ class Watering(Base):
     __tablename__ = "watering"
 
     id = Column(Integer, primary_key=True, index=True)
-    watering_mode = Column(String, default="auto")
+    watering_mode = Column(Integer, default=1)
     watering_threshold = Column(Float, default=0.0)
     watering_duration = Column(Integer, default=5)
     plant_id = Column(Integer, ForeignKey("plants.id"))
