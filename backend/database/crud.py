@@ -6,7 +6,7 @@ from sqlalchemy.testing.plugin.plugin_base import config
 
 from database.database import get_db
 from models.models import Plant, MoistureReading, Config, Led, Watering, WaterLevel
-from schemas.schemas import PlantCreate, MoistureReadingCreate, WeatherCreate, ConfigCreate, LedCreate
+from schemas.schemas import PlantCreate, MoistureReadingCreate, ConfigCreate, LedCreate
 
 
 # Plant CRUD operations

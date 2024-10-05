@@ -32,6 +32,7 @@ class Plant(Base):
     config = relationship("Config", back_populates="plant")
     led = relationship("Led", back_populates="plant")
     watering = relationship("Watering", back_populates="plant")
+    water_level = relationship("WaterLevel", back_populates="plant")
 
 
 class MoistureReading(Base):

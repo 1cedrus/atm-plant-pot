@@ -13,13 +13,13 @@ from utils import pin_authenticate
 
 router = APIRouter(prefix="/api/mqtt", tags=["mqtt"])
 
-@iot.accept(topic=Topic.SOIL_MOISTURE_TOPIC)
+@iot.accept(topic=str(Topic.SOIL_MOISTURE_TOPIC))
 def soil_moisture_data(request: str, db: Session = Depends(get_db)):
     plant_id = db.query(Plant).first().id
     create_moisture_reading(db, moisture=request, plant_id=plant_id)
     print(f"Soil moisture data : {request}")
 
-@iot.accept(topic=Topic.WATER_LEVEL_TOPIC)
+@iot.accept(topic=str(Topic.WATER_LEVEL_TOPIC))
 def water_level_data(request: str, db: Session = Depends(get_db)):
     plant_id = db.query(Plant).first().id
     create_water_level(db, water_level=int(request), plant_id=plant_id)
