@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from database.database import get_db
 from models.models import Config, hash_password
 
+APIKEY = "PJP6LSPND8S8G9XJZ65HZP8KP"
+
 SECRET_KEY = "5f57e01c59634054a8085e3e7486a2f735a6c08d12e88f68b0c7b42cc08e32c8"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30

@@ -9,7 +9,6 @@ fastapi-mqtt==2.2.0
 gmqtt==0.6.16
 greenlet==3.1.1
 h11==0.14.0
-hbmqtt==0.9.6
 httptools==0.6.1
 idna==3.10
 iotcore==0.3.0

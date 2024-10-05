@@ -11,7 +11,7 @@ from routers.topic import Topic, Watering
 from schemas.rq_schemas import UpdateWateringMode, UpdateLedMode
 from utils import pin_authenticate
 
-router = APIRouter(prefix="/api/mqtt", tags=["mqtt"])
+router = APIRouter(prefix="/api/mqtt")
 
 @iot.accept(topic=str(Topic.SOIL_MOISTURE_TOPIC))
 def soil_moisture_data(request: str, db: Session = Depends(get_db)):
@@ -42,7 +42,7 @@ def water_level_data(request: str, db: Session = Depends(get_db)):
 #     return {"response": "published"}
 
 
-@router.post("/led_custom")
+@router.post("/led_custom", tags=["led custom"])
 def led_custom(request: UpdateLedCustom, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
     list_params = request.message.split(",")
     if len(list_params) != 5:
