@@ -25,6 +25,10 @@ PubSubClient client(espClient);
 void setup() {
   Serial.begin(9600);
 
+  pinMode(SOIL_MOISTURE_PIN, INPUT);
+  pinMode(WATER_LEVEL_PIN, INPUT);
+  pinMode(WATER_PUMP_PIN, OUTPUT);
+
   preferences.begin("app", false);
   toWater = preferences.getUShort("threashold", DEFAULT_THRESHOLD);
   preferences.end();
@@ -32,10 +36,6 @@ void setup() {
   // Just run at AUTOMATIC mode till smt get update by backend
   xTaskCreate(autoWater, "AutoWater", 2048, &sun, 1, &autoWaterTask);
   ensureConnection();
-
-  pinMode(SOIL_MOISTURE_PIN, INPUT);
-  pinMode(WATER_LEVEL_PIN, INPUT);
-  pinMode(WATER_PUMP_PIN, OUTPUT);
 
   messageQueue = xQueueCreate(20, sizeof(Message));
 
