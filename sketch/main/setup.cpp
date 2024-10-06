@@ -1,4 +1,3 @@
-#include "HardwareSerial.h"
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <PubSubClient.h>
@@ -22,7 +21,7 @@ const char* _BROKER_SETUP_FORM = R"rawliteral(
 const char* _FORM = "YOU NEED TO SET THE FORM YOURSELF!";
 
 void ensureConnection() {
-  Serial.begin(9600);
+  Serial.begin(9600); 
 
   preferences.begin("app", false);
 
@@ -31,7 +30,7 @@ void ensureConnection() {
 
     while (WiFi.status() != WL_CONNECTED) {
       server->handleClient();
-    } 
+    }
   }
 
   if (!tryConnectToBrokerInFlash()) {
@@ -129,11 +128,14 @@ bool tryConnectToBroker(const char* broker, const uint16_t port) {
 void webServerOn(const char* formToShow) {
   if (!WiFi.softAPIP()) {
     startSoftAPMode();
-  } else if (server) {
+  }
+  if (server != nullptr) {
     _FORM = formToShow;
-  } else {
+  }
+  else {
     server = new WebServer(80);
 
+    _FORM = formToShow;
     server->on("/", HTTP_GET, []() {
       server->send(200, "text/html", _FORM);
     });
@@ -161,7 +163,7 @@ void webServerOff(bool closeAPMode) {
 
 bool tryConnectToBrokerInFlash() {
   String broker = preferences.getString("broker");
-  uint16_t port = preferences.getUShort("broker_port");
+  uint16_t port = preferences.getUShort("port");
 
   if (broker.length() > 0) {
     return tryConnectToBroker(broker.c_str(), port);
@@ -204,11 +206,14 @@ void handleBrokerForm() {
     String broker = server->arg("broker");
     uint16_t port = static_cast<uint16_t>(atoi(server->arg("port").c_str()));
 
+    Serial.printf("\n[INFO]: Received %s - %d", broker, port);
+
     if (tryConnectToBroker(broker.c_str(), port)) {
       saveBrokerCredentials(broker.c_str(), port);
     }
   } else {
-    server->send(200, "text/html", _FORM);
+    server->sendHeader("Location", "/", true); 
+    server->send(302, "text/plain", "Redirecting...");
   }  
 }
 
@@ -221,7 +226,8 @@ void handleWiFiForm() {
       saveWiFiCredentials(ssid.c_str(), password.c_str());
     }
   } else {
-    server->send(200, "text/html", _FORM);
+    server->sendHeader("Location", "/", true); 
+    server->send(302, "text/plain", "Redirecting...");
   }
 }
 

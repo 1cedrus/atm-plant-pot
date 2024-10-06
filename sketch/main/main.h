@@ -5,9 +5,9 @@
 
 #define PUBLISH_SOIL_MOISTURE_DURATION 2000 
 #define PUBLISH_WATER_LEVEL_DURATION 5000
-#define SOIL_MOISTURE_PIN 13
-#define WATER_LEVEL_PIN 14
-#define WATER_PUMP_PIN 15
+#define SOIL_MOISTURE_PIN 16
+#define WATER_LEVEL_PIN 10
+#define WATER_PUMP_PIN 11
 #define DEFAULT_THRESHOLD 200
 #define WAIT_FOR_CONNECTION 5000
 
@@ -44,6 +44,8 @@ const char DELIMITER = ',';
 void mqttCallback(char* topic, byte* payload, unsigned int length);
 void mqttLoopTask(void* param);
 void messageProcessor(void* param);
+void publishSoilMoisture(void *_pvParameters);
+void publishWaterLevel(void *_pvParameters);
 
 typedef void (*TopicHandler)(int[], int);
 typedef uint16_t Threshold;

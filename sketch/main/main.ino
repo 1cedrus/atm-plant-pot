@@ -17,6 +17,7 @@ Threshold toWater = DEFAULT_THRESHOLD;
 // Default set as AUTOMATIC
 Mode wateringMode = AUTOMATIC;
 TaskHandle_t autoWaterTask = NULL;
+TaskHandle_t sunLED = NULL;
 
 QueueHandle_t messageQueue;
 WiFiClient espClient;
@@ -26,15 +27,15 @@ void setup() {
   Serial.begin(9600);
 
   pinMode(SOIL_MOISTURE_PIN, INPUT);
-  pinMode(WATER_LEVEL_PIN, INPUT);
+  pinMode(WATER_LEVEL_PIN, INPUT); 
   pinMode(WATER_PUMP_PIN, OUTPUT);
 
-  preferences.begin("app", false);
+  preferences.begin("app", true);
   toWater = preferences.getUShort("threashold", DEFAULT_THRESHOLD);
   preferences.end();
 
   // Just run at AUTOMATIC mode till smt get update by backend
-  xTaskCreate(autoWater, "AutoWater", 2048, &sun, 1, &autoWaterTask);
+  xTaskCreate(autoWater, "AutoWater", 2048, NULL, 1, &autoWaterTask);
   ensureConnection();
 
   messageQueue = xQueueCreate(20, sizeof(Message));
@@ -58,7 +59,7 @@ void setup() {
     2048, 
     &sun,
     1, 
-    NULL
+    &sunLED
   );
   xTaskCreate(
     [](void* pvParameters) {
@@ -72,7 +73,7 @@ void setup() {
     NULL
   );
 
-  Serial.println("INFO: Done setup!");
+  Serial.print("\n[INFO]: Done setup!");
 }
 
 void loop() {
@@ -87,7 +88,15 @@ void mqttLoopTask(void* param) {
       wateringMode = AUTOMATIC;
       vTaskResume(autoWaterTask);
 
-      tryConnectToBrokerInFlash();
+      preferences.begin("app", true);
+      if (tryConnectToBrokerInFlash()) {
+        client.subscribe(LED_CUSTOM_TOPIC, 1);
+        client.subscribe(WATER_PUMP_TOPIC, 1);
+        client.subscribe(THRESHOLD_TOPIC, 1);
+        client.subscribe(SETTINGS_TOPIC, 1);
+      }
+
+      preferences.end();
     }
 
     client.loop();
@@ -99,6 +108,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   strncpy(msg.topic, topic, sizeof(msg.topic));
   strncpy(msg.payload, (char*)payload, length);
   msg.payload[length] = '\0';
+
+  Serial.printf("\n[INFO]: Received at %s with %s", msg.topic, msg.payload);
   
   xQueueSend(messageQueue, &msg, portMAX_DELAY);
 }
@@ -109,8 +120,10 @@ void messageProcessor(void* param) {
 
   while (true) {
     if (xQueueReceive(messageQueue, &msg, portMAX_DELAY)) {
+      Serial.printf("\n[INFO]: Processing messsage from %s with %s", msg.topic, msg.payload);
+      
       int payload[10];
-      int payloadLength = 0;
+      int payloadLength;
 
       char *token = strtok(msg.payload, &DELIMITER);
 
@@ -119,13 +132,13 @@ void messageProcessor(void* param) {
         token = strtok(nullptr, &DELIMITER);
       }
 
-      if (strcmp(msg.topic, LED_CUSTOM_TOPIC)) {
+      if (!strcmp(msg.topic, LED_CUSTOM_TOPIC)) {
         handler = ledCustom;
-      } else if (strcmp(msg.topic, WATER_PUMP_TOPIC)) {
+      } else if (!strcmp(msg.topic, WATER_PUMP_TOPIC)) {
         handler = waterPump;
-      } else if (strcmp(msg.topic, THRESHOLD_TOPIC)) {
+      } else if (!strcmp(msg.topic, THRESHOLD_TOPIC)) {
         handler = threshold;
-      } else if (strcmp(msg.topic, SETTINGS_TOPIC)) {
+      } else if (!strcmp(msg.topic, SETTINGS_TOPIC)) {
         handler = settings;
       }
 
@@ -135,7 +148,7 @@ void messageProcessor(void* param) {
 }
 
 void publishSoilMoisture(void *_pvParameters) {
-  char *psSoilMoisture;
+  char psSoilMoisture[10];
   int nLastTimeUpdate = 0;
 
   while (true) {
@@ -144,11 +157,15 @@ void publishSoilMoisture(void *_pvParameters) {
       continue;
     }
 
-    int nSoilMoisture = analogRead(SOIL_MOISTURE_PIN);
+    int nSoilMoisture = analogRed(SOIL_MOISTURE_PIN);
 
     if (nLastTimeUpdate != nSoilMoisture) {
       itoa(nSoilMoisture, psSoilMoisture, 10);
       client.publish(SOIL_MOISTURE_TOPIC, psSoilMoisture, strlen(psSoilMoisture));
+
+      Serial.printf("\n[INFO]: Publish soil moisture %d", nSoilMoisture);
+
+      nLastTimeUpdate = nSoilMoisture;
     }
 
     vTaskDelay(PUBLISH_SOIL_MOISTURE_DURATION / portTICK_PERIOD_MS);  
@@ -164,10 +181,12 @@ void publishWaterLevel(void *_pvParameters) {
       continue;
     }
 
-    bool bWaterLevel = digitalRead(WATER_LEVEL_PIN);
+    int bWaterLevel = analogRead(WATER_LEVEL_PIN);
 
     if (bLastTimeUpdate != bWaterLevel) {
-      client.publish(WATER_LEVEL_TOPIC, bWaterLevel ? "0" : "1", 1);
+      client.publish(WATER_LEVEL_TOPIC, bWaterLevel ? "1" : "0", 1);
+
+      bLastTimeUpdate = bWaterLevel;
     }
 
     vTaskDelay(PUBLISH_WATER_LEVEL_DURATION / portTICK_PERIOD_MS);  
@@ -189,14 +208,14 @@ void autoWater(void *_pvParameters) {
 }
 
 void ledCustom(int payload[], int payloadLength) {
-  if (payloadLength != 5) {
+  if (payloadLength != 6) {
     Serial.print("\n[ERROR]: Payload format is not correct!");
   } else {
-    LED selectedLED = payload[0] == 0 ? sun : cloud;
+    LED* selectedLED = payload[0] == 0 ? &sun : &cloud;
 
-    selectedLED.setColor({ payload[1], payload[2], payload[3] });
-    selectedLED.setState(static_cast<LEDMode>(payload[5]));
-    selectedLED.setBrightness((float) payload[4] / 255);
+    selectedLED->setColor({ payload[1], payload[2], payload[3] });
+    selectedLED->setState(static_cast<LEDMode>(payload[5]));
+    selectedLED->setBrightness((float) payload[4] / 255);
   }
 }
 

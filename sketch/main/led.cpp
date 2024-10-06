@@ -1,9 +1,10 @@
+#include "HardwareSerial.h"
 #include <stdint.h>
 #include <Arduino.h>
 #include <stdlib.h>
 #include "led.h"
 
-LED::LED(Pins pins) : _color({0, 0, 0}), _state(OFF), _brightness_factor(1.0) {
+LED::LED(Pins pins) : _color({255, 255, 255}), _state(OFF), _brightness_factor(1.0) {
   _pins = pins;
 
   pinMode(_pins.red, OUTPUT);
@@ -42,7 +43,7 @@ LEDMode LED::getState() {
 
 void LED::run(void *_pvParameters) {
   // This is for STARLIGHT 
-  uint8_t starCount = random(2);
+  uint8_t starCount = random(4);
   uint8_t brightness = 255;
 
   while (true) {
@@ -64,18 +65,18 @@ void LED::run(void *_pvParameters) {
         analogWrite(_pins.green, (float) _color.green * brightnessFactor);
 
         brightness -= 255 / 10;
-        if (random(1) || brightness <= 0) {
+        if (random(2) || brightness <= 0) {
           brightness = 255;
           starCount -= 1;
         } 
 
-        if (starCount == 0) {
-          starCount = random(2);
+        if (starCount <= 0) {
+          starCount = random(4);
           vTaskDelay(random(1000, 5000) / portTICK_PERIOD_MS); 
         }
     }
 
-    vTaskDelay(100 / portTICK_PERIOD_MS);  // Delay for 100 ms
+    vTaskDelay(50 / portTICK_PERIOD_MS);  // Delay for 100 ms
   }
 }
 
