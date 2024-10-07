@@ -54,5 +54,7 @@ async def pin_authenticate(db: Session = Depends(get_db), pin: str = Depends(ver
         )
     return config  # Return config object nếu mã PIN hợp lệ
 
+#Get-Process | Where-Object { $_.ProcessName -like "*python*" }
+#taskkill /F /PID <ID>
 
 

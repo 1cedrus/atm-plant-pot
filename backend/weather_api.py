@@ -13,7 +13,6 @@ from utils import APIKEY
 from sqlalchemy.orm import Session
 from contextlib import contextmanager
 from database.database import SessionLocal
-from mqtt import iot
 
 @contextmanager
 def get_db_session():

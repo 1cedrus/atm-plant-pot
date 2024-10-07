@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -21,3 +23,8 @@ def get_db():
         yield db  # Sử dụng yield để trả về session
     finally:
         db.close()  # Đảm bảo đóng session khi hoàn thành
+
+def get_db_other():
+    generator = get_db()
+    session = next(generator)
+    return session

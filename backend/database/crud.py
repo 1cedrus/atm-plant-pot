@@ -69,6 +69,8 @@ def get_leds(db: Session, skip: int = 0, limit: int = 10):
 
 def set_led(db: Session, led_id: int, red: int, green: int, blue: int, state: int, brightness: int):
     db_led = db.query(Led).filter(Led.id == led_id).first()
+    if not db_led:
+        return None
     db_led.red = red
     db_led.green = green
     db_led.blue = blue

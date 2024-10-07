@@ -47,7 +47,6 @@ class Plant(PlantBase):
 class ConfigBase(BaseModel):
     hash_password: str
     real_time_position: str
-    led_mode: str
     operation_mode: str
 
 

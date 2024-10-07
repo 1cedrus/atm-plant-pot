@@ -62,7 +62,7 @@ class Config(Base):
     id = Column(Integer, primary_key=True, index=True)
     hash_password = Column(String, default=hash_password("1234"))
     real_time_position = Column(String, default="Hanoi")
-    led_mode = Column(String, default="auto")
+    led_mode = Column(String, default="off")
     operation_mode = Column(String, default="ADAPTIVE")
     plant_id = Column(Integer, ForeignKey("plants.id"))
 

@@ -12,7 +12,7 @@ class MoistureReadingScope(BaseModel):
     to: datetime
 
 class UpdateWateringMode(BaseModel):
-    mode: int
+    mode: str
 
 class UpdateLedMode(BaseModel):
     mode: str

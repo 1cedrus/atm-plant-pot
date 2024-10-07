@@ -8,7 +8,7 @@ class Threshold(BaseModel):
     threshold: int
 
 class WateringMode(BaseModel):
-    mode: int
+    mode: str
 
 class UpdateLedCustom(BaseModel):
     message: str

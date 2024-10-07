@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Request
 
 from fastapi import APIRouter
-from fastapi.params import Depends
+from fastapi.params import Depends, Query
 from sqlalchemy.orm import Session
 from starlette.types import HTTPExceptionHandler
 
@@ -27,7 +27,7 @@ async def update_position(request: Position, config: ConfigBase = Depends(pin_au
     return {"message": "success"}
 
 @router.get("/soil-moisture", tags=["soil moisture"])
-async def get_soil_moisture(request: MoistureReadingScope , config : Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
+async def get_soil_moisture(request: MoistureReadingScope = Query(...) , config : Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
     datas = get_moisture_readings_in_range(db, config.plant_id, request.from_, request.to)
     return {"soil_moistures": datas}
 
@@ -56,8 +56,8 @@ async def test(rq: Request):
 async def get_led_mode(config: Config = Depends(pin_authenticate)):
     return {"led_mode": config.led_mode}
 
-# @router.post("/led-mode", tags=["led mode"])
-# async def update_led_mode(request: UpdateLedMode, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
-#     config.led_mode = request.mode
-#     db.commit()
-#     return {"message": "success change led mode to " + request.mode}
+@router.post("/led-mode", tags=["led mode"])
+async def update_led_mode(request: UpdateLedMode, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
+    config.led_mode = request.mode
+    db.commit()
+    return {"message": "success change led mode to " + request.mode}
