@@ -19,7 +19,7 @@ const initialState: AuthProviderState = {
 
 const AuthProviderContext = createContext<AuthProviderState>(initialState);
 
-export function AuthProvider({ children }: AuthProviderProps) {
+export default function AuthProvider({ children }: AuthProviderProps) {
   const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem('authToken') || null);
 
   useEffect(() => {

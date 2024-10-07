@@ -2,11 +2,13 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { WateringMode } from '@/lib/types';
-import { Separator } from '../ui/separator';
+import { WateringMode } from '@/types';
+import { Separator } from '@/components/ui/separator';
+import AddNewReminder from '@/components/AddNewReminder';
+import ReminderCard from '@/components/ReminderCard';
 
 export default function WateringModeCard() {
   const [mode, setMode] = useState<WateringMode>(WateringMode.Manual);
@@ -48,12 +50,13 @@ export default function WateringModeCard() {
                   className='w-[180px]'
                   value={threshold}
                   onChange={(e) => setThreshold(Number(e.target.value))}
+                  disabled={mode === WateringMode.Manual}
                 />
                 <p className='text-sm text-muted-foreground'>Water when moisture level falls below {threshold}%</p>
               </div>
               <div className='space-y-2'>
                 <Label>Choose water duration</Label>
-                <Select>
+                <Select disabled={mode === WateringMode.Manual}>
                   <SelectTrigger className='w-[180px]'>
                     <SelectValue placeholder='Duration' />
                   </SelectTrigger>
@@ -80,10 +83,15 @@ export default function WateringModeCard() {
               />
               <Label htmlFor='manual-mode'>{'Manually water the plants'}</Label>
             </div>
+            <div className='flex flex-col gap-2'>
+              <AddNewReminder isDisabled={mode === WateringMode.Automatic} />
+              <ReminderCard isDisabled={mode === WateringMode.Automatic} />
+            </div>
           </div>
         </form>
       </CardContent>
       <CardFooter className='flex justify-between'>
+        <Button variant='outline'>Reset</Button>
         <Button>Save</Button>
       </CardFooter>
     </Card>

@@ -1,11 +1,10 @@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import ThemeToggle from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { useAuthority } from '@/providers/auth-provider';
+import { useAuthority } from '@/providers/AuthenticationProvider';
 
 enum Spot {
   Dashboard = 'dashboard',
@@ -32,7 +31,7 @@ export default function NavigationBarr() {
   };
 
   return (
-    <div className='flex justify-between items-center pb-4'>
+    <div className='flex justify-start items-center pb-4'>
       <div className='flex gap-4 items-center'>
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
@@ -63,7 +62,7 @@ export default function NavigationBarr() {
                 </Button>
                 <Separator />
                 <Button onClick={() => navigateTo(Spot.LedSettings)} variant='link'>
-                  Led Settings
+                  LED Settings
                 </Button>
               </div>
               <Button onClick={handleLogout} variant='outline' className='mb-8'>
@@ -74,9 +73,8 @@ export default function NavigationBarr() {
         </Sheet>
         {pathname.includes(Spot.Dashboard) && <h1 className='text-2xl font-bold '>💻 Dashboard</h1>}
         {pathname.includes(Spot.WateringMode) && <h1 className='text-2xl font-bold '>💦 Watering Mode</h1>}
-        {pathname.includes(Spot.LedSettings) && <h1 className='text-2xl font-bold '>💡 Led Control</h1>}
+        {pathname.includes(Spot.LedSettings) && <h1 className='text-2xl font-bold '>💡 LED Settings</h1>}
       </div>
-      <ThemeToggle />
     </div>
   );
 }

@@ -3,10 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Leaf } from 'lucide-react';
-import { useAuthority } from '@/providers/auth-provider';
+import { useAuthority } from '@/providers/AuthenticationProvider';
 import { useNavigate } from 'react-router-dom';
+import { login } from '@/lib/apis';
+import { toast } from '@/hooks/useToast';
 
-export default function LoginPage() {
+export default function Login() {
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const { setAuthToken, isAuthenticated } = useAuthority();
@@ -19,18 +21,23 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('PIN submitted:', pin);
 
     try {
-      // const {
-      //   data: { authToken },
-      // } = await login(pin);
+      const {
+        data: { access_token },
+      } = await login(pin);
 
-      setAuthToken(pin);
+      setAuthToken(access_token);
 
       navigate('/');
     } catch (error) {
       console.error('Error logging in:', error);
+
+      toast({
+        title: 'Error',
+        description: 'Invalid PIN. Please try again.',
+        duration: 3000,
+      });
     }
 
     setPin('');
@@ -61,7 +68,7 @@ export default function LoginPage() {
             />
           </CardContent>
           <CardFooter>
-            <Button type='submit' className={`w-full`} >
+            <Button type='submit' className={`w-full`}>
               Login
             </Button>
           </CardFooter>

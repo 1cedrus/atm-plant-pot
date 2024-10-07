@@ -4,7 +4,8 @@ import { Progress } from '@/components/ui/progress';
 import { Sprout, Waves, Cloud, Sun, CloudRain, Thermometer } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { useAuthority } from '@/providers/auth-provider';
+import { useAuthority } from '@/providers/AuthenticationProvider';
+import { DatePickerWithRange } from '@/components/ui/date-picker-with-range';
 
 // Mock data for the soil moisture chart
 const initialMockData = [
@@ -43,6 +44,8 @@ export default function Dashboard() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const [chartData, setChartData] = useState(initialMockData);
+
+  console.log('go here');
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -113,7 +116,7 @@ export default function Dashboard() {
   return (
     <>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6'>
-        <Card>
+        <Card className='flex flex-col justify-between'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Soil Moisture</CardTitle>
             <Sprout className='h-4 w-4 text-muted-foreground' />
@@ -123,14 +126,13 @@ export default function Dashboard() {
             <Progress value={soilMoisture} className='mt-2' />
           </CardContent>
         </Card>
-        <Card>
+        <Card className='flex flex-col justify-between'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Water Level</CardTitle>
             <Waves className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{waterLevel.toFixed(1)}%</div>
-            <Progress value={waterLevel} className='mt-2' />
+            <div className='text-2xl font-bold'>Above 30%</div>
           </CardContent>
         </Card>
         <Card>
@@ -154,8 +156,9 @@ export default function Dashboard() {
         </Card>
       </div>
       <Card className='mt-6'>
-        <CardHeader>
+        <CardHeader className='flex flex-row justify-between'>
           <CardTitle>Soil Moisture Over Time</CardTitle>
+          <DatePickerWithRange />
         </CardHeader>
         <CardContent>
           <div className='h-[300px]'>
