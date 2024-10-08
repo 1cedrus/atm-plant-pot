@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-
+import asyncio
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -9,11 +9,13 @@ from sqlalchemy.orm import Session
 from database.database import get_db
 from models.models import Config, hash_password
 
+
+
 APIKEY = "PJP6LSPND8S8G9XJZ65HZP8KP"
 
 SECRET_KEY = "5f57e01c59634054a8085e3e7486a2f735a6c08d12e88f68b0c7b42cc08e32c8"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_DAYS = 999
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
@@ -21,7 +23,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=30)
+        expire = datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -54,7 +56,14 @@ async def pin_authenticate(db: Session = Depends(get_db), pin: str = Depends(ver
         )
     return config  # Return config object nếu mã PIN hợp lệ
 
+def get_event_loop():
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        # Nếu không có event loop nào đang chạy, tạo một cái mới
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop
+
 #Get-Process | Where-Object { $_.ProcessName -like "*python*" }
 #taskkill /F /PID <ID>
-
-

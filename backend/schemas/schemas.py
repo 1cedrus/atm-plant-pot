@@ -47,7 +47,8 @@ class Plant(PlantBase):
 class ConfigBase(BaseModel):
     hash_password: str
     real_time_position: str
-    operation_mode: str
+    led_mode: str
+    mode: str
 
 
 class ConfigCreate(ConfigBase):
@@ -101,7 +102,6 @@ class WateringSchedule(WateringScheduleBase):
 
 
 class WateringBase(BaseModel):
-    watering_mode: str
     watering_threshold: float
     watering_duration: int
 

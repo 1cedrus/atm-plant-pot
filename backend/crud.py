@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.testing.plugin.plugin_base import config
 
 from database.database import get_db
-from models.models import Plant, MoistureReading, Config, Led, Watering, WaterLevel
+from models.models import Plant, MoistureReading, Config, Led, Watering, WaterLevel, Watering_Schedule
 from schemas.schemas import PlantCreate, MoistureReadingCreate, ConfigCreate, LedCreate
 
 
@@ -16,10 +16,6 @@ def create_plant(db: Session, plant: PlantCreate):
     db.commit()
     db.refresh(db_plant)
     return db_plant
-
-
-# def get_plants(db: Session, skip: int = 0, limit: int = 10):
-#     return db.query(Plant).offset(skip).limit(limit).all()
 
 
 def get_plant(db: Session, plant_id: int):
@@ -34,11 +30,9 @@ def create_moisture_reading(db: Session, moisture: str, plant_id: int):
     db.refresh(db_reading)
     return db_reading
 
-
-# def get_moisture_readings(db: Session, skip: int = 0, limit: int = 10):
-#     return db.query(MoistureReading).offset(skip).limit(limit).all()
-
-def get_moisture_readings_in_range(db: Session, plant_id: int ,from_: datetime, to: datetime):
+def get_moisture_readings(db: Session, plant_id: int ,from_: datetime | None = None, to: datetime | None = None):
+    if from_ is None and to is None:
+        return db.query(MoistureReading).filter(MoistureReading.plant_id == plant_id).order_by(MoistureReading.timestamp.desc()).limit(5).all()
     return db.query(MoistureReading).filter(MoistureReading.plant_id == plant_id, MoistureReading.timestamp >= from_, MoistureReading.timestamp <= to).all()
 
 
@@ -92,3 +86,11 @@ def create_water_level(db: Session, water_level: int, plant_id: int):
 
 def get_water_level(db: Session, plant_id: int):
     return db.query(WaterLevel).filter(WaterLevel.plant_id == plant_id).first()
+
+def create_watering_schedule(db: Session, water_id: int, schedules: list[dict]):
+    for schedule in schedules:
+        db_schedule = Watering_Schedule(**schedule, watering_id=water_id)
+        db.add(db_schedule)
+        db.commit()
+        db.refresh(db_schedule)
+    return True

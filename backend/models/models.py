@@ -45,12 +45,18 @@ class MoistureReading(Base):
 
     plant = relationship("Plant", back_populates="moisture_readings")
 
+    def to_dict(self):
+        return {
+            "moisture_level": self.moisture_level,
+            "timestamp": self.timestamp.isoformat()
+        }
+
 class WaterLevel(Base):
     __tablename__ = "water_level"
 
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
-    water_level = Column(Integer, default=1)
+    water_level = Column(Integer, default=0)
     plant_id = Column(Integer, ForeignKey("plants.id"))
 
     plant = relationship("Plant", back_populates="water_level")
@@ -63,7 +69,7 @@ class Config(Base):
     hash_password = Column(String, default=hash_password("1234"))
     real_time_position = Column(String, default="Hanoi")
     led_mode = Column(String, default="off")
-    operation_mode = Column(String, default="ADAPTIVE")
+    mode = Column(String, default="ADAPTIVE")
     plant_id = Column(Integer, ForeignKey("plants.id"))
 
     plant = relationship("Plant", back_populates="config")
@@ -88,8 +94,8 @@ class Watering_Schedule(Base):
     __tablename__ = "watering_schedule"
 
     id = Column(Integer, primary_key=True, index=True)
-    watering_time = Column(Time, default=datetime.datetime.utcnow().time)
-    watering_duration = Column(Integer, default=5)
+    time = Column(Time, default=datetime.datetime.utcnow().time)
+    duration = Column(Integer, default=5)
     watering_id = Column(Integer, ForeignKey("watering.id"))
 
     watering = relationship("Watering", back_populates="watering_schedule")
@@ -99,10 +105,38 @@ class Watering(Base):
     __tablename__ = "watering"
 
     id = Column(Integer, primary_key=True, index=True)
-    watering_mode = Column(Integer, default=1)
     watering_threshold = Column(Float, default=0.0)
     watering_duration = Column(Integer, default=5)
     plant_id = Column(Integer, ForeignKey("plants.id"))
 
     plant = relationship("Plant", back_populates="watering")
     watering_schedule = relationship("Watering_Schedule", back_populates="watering")
+
+class Weather(Base):
+    __tablename__ = "weather"
+
+    id = Column(Integer, primary_key=True, index=True)
+    temp = Column(Float)
+    humidity = Column(Float)
+    conditions = Column(String)
+    datetime = Column(DateTime, default=datetime.datetime.utcnow)
+    description = Column(String)
+    cloudcover = Column(Float)
+    precip = Column(Float)
+    precipprob = Column(Float)
+    solarradiation = Column(Float)
+    icon = Column(String)
+
+    def to_dict(self):
+        return {
+            "temp": self.temp,
+            "humidity": self.humidity,
+            "conditions": self.conditions,
+            "datetime": self.datetime.isoformat(),
+            "description": self.description,
+            "cloudcover": self.cloudcover,
+            "precip": self.precip,
+            "precipprob": self.precipprob,
+            "solarradiation": self.solarradiation,
+            "icon": self.icon
+        }

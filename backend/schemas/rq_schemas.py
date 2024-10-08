@@ -8,8 +8,8 @@ class Position(BaseModel):
 
 #get list moisture readings from database
 class MoistureReadingScope(BaseModel):
-    from_: datetime
-    to: datetime
+    from_: datetime | None = None
+    to: datetime | None = None
 
 class UpdateWateringMode(BaseModel):
     mode: str

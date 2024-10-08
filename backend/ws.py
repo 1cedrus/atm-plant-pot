@@ -1,7 +1,25 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, APIRouter
 from typing import List, Dict
+from database.database import get_db_other
+from models.models import MoistureReading, WaterLevel, Weather
 
 router = APIRouter()
+
+
+def get_lastest_data():
+    db = get_db_other()
+    response = {}
+    try:
+        moisure = db.query(MoistureReading).order_by(MoistureReading.timestamp.desc()).first()
+        response["moisture"] = moisure.moisture_level if moisure else None
+        water_level = db.query(WaterLevel).order_by(WaterLevel.timestamp.desc()).first()
+        response["water_level"] = water_level.water_level if water_level else None
+        weather = db.query(Weather).order_by(Weather.datetime.desc()).first()
+        response["weather"] = weather.to_dict() if weather else None
+
+    finally:
+        db.close()
+    return response
 
 # Lưu trữ danh sách các kết nối WebSocket
 class ConnectionManager:
@@ -11,6 +29,7 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
+        await websocket.send_json({"type": "connected", "data": get_lastest_data()})
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)

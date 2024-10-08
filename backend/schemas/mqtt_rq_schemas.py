@@ -12,3 +12,10 @@ class WateringMode(BaseModel):
 
 class UpdateLedCustom(BaseModel):
     message: str
+
+class WaterShedule(BaseModel):
+    time: str
+    duration: int
+
+class UpdateWaterSchedule(BaseModel):
+    schedules: list[WaterShedule] = []

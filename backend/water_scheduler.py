@@ -1,0 +1,61 @@
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
+from sqlalchemy.testing.plugin.plugin_base import config
+
+from database.database import get_db_other
+from models.models import Watering_Schedule, Config
+# from routers.mqtt_router import watering_job # tránh lỗi import vòng tròn
+
+scheduler = AsyncIOScheduler()
+
+
+def add_all_schedule():
+    db = get_db_other()
+    try:
+        db_schedules = db.query(Watering_Schedule).all()
+        if db_schedules:
+            from routers.mqtt_router import watering_job # tránh lỗi import vòng tròn
+            for db_schedule in db_schedules:
+                db_time = db_schedule.time
+                hour = (db_time.hour + 7) % 24
+                minute = db_time.minute
+                duration = db_schedule.duration
+                scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(db_schedule.id), args=[duration])
+                print(f"add schedule {db_schedule.id} at {hour}:{minute}")
+    finally:
+        db.close()
+
+def add_a_schedule(schedule_id, hour, minute):
+    from routers.mqtt_router import watering_job # tránh lỗi import vòng tròn
+    scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(schedule_id))
+    print(f"add schedule {schedule_id} at {hour}:{minute}")
+
+def remove_all_schedule():
+    scheduler.remove_all_jobs()
+    print("remove all schedule")
+
+def remove_schedule(schedule_id):
+    scheduler.remove_job(str(schedule_id))
+    print(f"remove schedule {schedule_id}")
+
+def start_scheduler():
+    scheduler.start()
+    print("start scheduler")
+
+def stop_scheduler():
+    scheduler.shutdown()
+    print("stop scheduler")
+
+def init_scheduler():
+    db = get_db_other()
+    try:
+        my_config = db.query(Config).first()
+        if my_config:
+            if my_config.mode == "ADAPTIVE":
+                add_all_schedule()
+                start_scheduler()
+            else:
+                stop_scheduler()
+    finally:
+        db.close()
+    print("init scheduler")
