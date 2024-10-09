@@ -1,51 +1,27 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Sprout, Waves, Cloud, Sun, CloudRain, Thermometer } from 'lucide-react';
+import { Sprout, Waves } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useAuthority } from '@/providers/AuthenticationProvider';
 import { DatePickerWithRange } from '@/components/ui/date-picker-with-range';
-
-// Mock data for the soil moisture chart
-const initialMockData = [
-  { time: '00:00', moisture: 65 },
-  { time: '04:00', moisture: 60 },
-  { time: '08:00', moisture: 70 },
-  { time: '12:00', moisture: 75 },
-  { time: '16:00', moisture: 72 },
-  { time: '20:00', moisture: 68 },
-];
-
-// Weather icon mapping
-const weatherIcons = {
-  Clear: Sun,
-  Clouds: Cloud,
-  Rain: CloudRain,
-};
-
-type WeatherData = {
-  main: {
-    temp: number;
-    humidity: number;
-  };
-  weather: {
-    main: string;
-    description: string;
-  }[];
-};
+import { useQuery } from '@tanstack/react-query';
+import { getSoilMoisture, getSoilMoistureData, getWaterLevel, getWeather, stopWater, water } from '@/lib/apis';
+import { timeAgo } from '@/lib/time';
+import { addDays, format, subDays } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+import { WebSocketEventType } from '@/types';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthority();
-  const [soilMoisture, setSoilMoisture] = useState(70);
-  const [waterLevel, setWaterLevel] = useState(85);
-  const [_isWatering, setIsWatering] = useState(false);
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [weatherError, setWeatherError] = useState<string | null>(null);
-  const [chartData, setChartData] = useState(initialMockData);
-
-  console.log('go here');
+  const [isWatering, setIsWatering] = useState<boolean>(false);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: subDays(new Date(Date.now()), 30),
+    to: new Date(Date.now()),
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -53,65 +29,47 @@ export default function Dashboard() {
     }
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    // Simulate real-time updates
-    const interval = setInterval(() => {
-      setSoilMoisture((prev) => Math.max(0, Math.min(100, prev + Math.random() * 10 - 5)));
-      setWaterLevel((prev) => Math.max(0, Math.min(100, prev - 0.5)));
+  const { data: soilMoisture } = useQuery({
+    queryKey: [WebSocketEventType.SoilMoisture],
+    queryFn: getSoilMoisture,
+  });
 
-      // Update chart data
-      setChartData((prevData) => {
-        const newData = [
-          ...prevData.slice(1),
-          {
-            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            moisture: soilMoisture,
-          },
-        ];
-        return newData;
-      });
-    }, 5000);
+  const { data: waterLevel } = useQuery({
+    queryKey: [WebSocketEventType.WaterLevel],
+    queryFn: getWaterLevel,
+  });
 
-    // Simulate weather API call
-    const fetchWeather = () => {
-      setTimeout(() => {
-        if (Math.random() > 0.1) {
-          // 90% success rate
-          const mockWeather = {
-            main: {
-              temp: Math.round(Math.random() * 15 + 10), // Random temp between 10-25°C
-              humidity: Math.round(Math.random() * 40 + 40), // Random humidity between 40-80%
-            },
-            weather: [
-              {
-                main: ['Clear', 'Clouds', 'Rain'][Math.floor(Math.random() * 3)],
-                description: 'Mocked weather condition',
-              },
-            ],
-          };
-          setWeather(mockWeather);
-        } else {
-          setWeatherError('Failed to load weather data');
-        }
-      }, 1000); // Simulate network delay
-    };
+  const { data: weather } = useQuery({
+    queryKey: [WebSocketEventType.Weather],
+    queryFn: getWeather,
+  });
 
-    fetchWeather();
+  const { data: soilMoistureData } = useQuery({
+    queryKey: [WebSocketEventType.SoilMoisture, date],
+    queryFn: async () => {
+      if (date?.from === undefined || date?.to === undefined) return [];
+      const data = await getSoilMoistureData(date!.from!.getTime(), addDays(date!.to!, 1).getTime());
 
-    return () => clearInterval(interval);
-  }, [soilMoisture]);
+      return data.map(({ timestamp, moisture_level }) => ({
+        timestamp: format(new Date(timestamp), 'MM/dd/yyyy HH:mm'),
+        moisture_level: ((moisture_level / 4095) * 100).toFixed(2),
+      }));
+    },
+  });
 
-  const _handleWatering = () => {
-    setIsWatering(true);
-    setTimeout(() => {
-      setIsWatering(false);
-      setSoilMoisture((prev) => Math.min(100, prev + 15));
-      setWaterLevel((prev) => Math.max(0, prev - 10));
-    }, 3000);
+  const handleWatering = async () => {
+    let msg;
+
+    if (isWatering) {
+      msg = await stopWater();
+    } else {
+      msg = await water();
+    }
+
+    setIsWatering((prev) => !prev);
+
+    console.log(msg);
   };
-
-  const WeatherIcon =
-    weather && weatherIcons[weather.weather[0].main] ? weatherIcons[weather.weather[0].main] : Thermometer;
 
   return (
     <>
@@ -122,8 +80,17 @@ export default function Dashboard() {
             <Sprout className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{soilMoisture.toFixed(1)}%</div>
-            <Progress value={soilMoisture} className='mt-2' />
+            {soilMoisture ? (
+              <>
+                <div className='flex gap-2 items-baseline'>
+                  <div className='text-2xl font-bold'>{((soilMoisture.moisture_level / 4095) * 100).toFixed(2)}%</div>
+                  <div className='text-xs text-gray-600'>{timeAgo(soilMoisture.timestamp)}</div>
+                </div>
+                <Progress value={(soilMoisture.moisture_level / 4095) * 100} className='mt-2' />
+              </>
+            ) : (
+              <div>Loading...</div>
+            )}
           </CardContent>
         </Card>
         <Card className='flex flex-col justify-between'>
@@ -131,23 +98,33 @@ export default function Dashboard() {
             <CardTitle className='text-sm font-medium'>Water Level</CardTitle>
             <Waves className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>Above 30%</div>
+          <CardContent className='flex-1'>
+            {waterLevel ? (
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-2 pt-4 h-full'>
+                <Button variant='outline' className='text-2xl font-bold h-full'>
+                  {waterLevel.water_level === 0 ? '⬇️ 30%' : '⬆️  30%'}
+                </Button>
+                <Button className='h-full font-bold text-2xl' variant='outline' onClick={handleWatering}>
+                  <span className={isWatering ? 'animate-spin mr-2' : 'mr-2'}>💦</span>
+                  {isWatering ? 'Stop' : 'Water'}
+                </Button>
+              </div>
+            ) : (
+              <div>Loading...</div>
+            )}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+          <CardHeader className='flex flex-row justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Current Weather</CardTitle>
-            <WeatherIcon className='h-4 w-4 text-muted-foreground' />
+            <img src={`src/assets/weather-icon/${weather?.icon}.svg`} className='h-10 w-10 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            {weatherError ? (
-              <div className='text-red-500'>{weatherError}</div>
-            ) : weather ? (
+            {weather ? (
               <div>
-                <div className='text-2xl font-bold'>{weather.main.temp}°C</div>
-                <div className='text-muted-foreground'>{weather.weather[0].description}</div>
-                <div className='text-muted-foreground'>Humidity: {weather.main.humidity}%</div>
+                <div className='text-2xl font-bold'>{weather.temp}°F</div>
+                <div className='text-muted-foreground'>Humidity: {weather.humidity}%</div>
+                <div className='text-muted-foreground'>{weather.description}</div>
               </div>
             ) : (
               <div>Loading weather data...</div>
@@ -158,17 +135,17 @@ export default function Dashboard() {
       <Card className='mt-6'>
         <CardHeader className='flex flex-row justify-between'>
           <CardTitle>Soil Moisture Over Time</CardTitle>
-          <DatePickerWithRange />
+          <DatePickerWithRange date={date} setDate={setDate} />
         </CardHeader>
         <CardContent>
           <div className='h-[300px]'>
             <ResponsiveContainer width='100%' height='100%'>
-              <LineChart data={chartData}>
+              <LineChart data={soilMoistureData}>
                 <CartesianGrid strokeDasharray='3 3' />
-                <XAxis dataKey='time' />
+                <XAxis dataKey='timestamp' />
                 <YAxis />
                 <Tooltip />
-                <Line type='monotone' dataKey='moisture' stroke='#8884d8' />
+                <Line type='monotone' dataKey='moisture_level' stroke='#8884d8' />
               </LineChart>
             </ResponsiveContainer>
           </div>

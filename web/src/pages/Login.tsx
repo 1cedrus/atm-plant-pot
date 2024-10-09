@@ -6,10 +6,11 @@ import { Leaf } from 'lucide-react';
 import { useAuthority } from '@/providers/AuthenticationProvider';
 import { useNavigate } from 'react-router-dom';
 import { login } from '@/lib/apis';
-import { toast } from '@/hooks/useToast';
+import useToast from '@/hooks/useToast';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [pin, setPin] = useState('');
   const { setAuthToken, isAuthenticated } = useAuthority();
 
@@ -24,7 +25,7 @@ export default function Login() {
 
     try {
       const {
-        data: { access_token },
+         access_token,
       } = await login(pin);
 
       setAuthToken(access_token);

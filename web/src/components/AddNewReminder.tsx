@@ -12,20 +12,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { TimePickerDemo } from '@/components/ui/time-picker';
+import { PlusIcon } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Reminder, WateringMode } from '@/types';
+import { newReminder } from '@/lib/apis';
 
 interface AddNewReminderProps {
   isDisabled?: boolean;
 }
 
 export default function AddNewReminder({ isDisabled }: AddNewReminderProps) {
-  const [duration, setDuration] = useState<string>();
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [duration, setDuration] = useState<number>();
   const [time, setTime] = useState<Date>();
 
+  const newReminderMutation = useMutation({
+    mutationFn: (reminder: Reminder) => newReminder(reminder),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [WateringMode.Manual] });
+    },
+  });
+
+  const onClose = () => {
+    setTime(undefined);
+    setDuration(undefined);
+    setOpen(false);
+  };
+
+  const onSave = () => {
+    if (time === undefined || duration === undefined) return;
+    newReminderMutation.mutate({ time: time.getTime(), duration, state: true });
+
+    onClose();
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className='w-[180px]' variant='outline' disabled={isDisabled}>
-          Add new reminder
+        <Button variant='outline' disabled={isDisabled} size='icon'>
+          <PlusIcon />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -40,7 +66,7 @@ export default function AddNewReminder({ isDisabled }: AddNewReminderProps) {
           </div>
           <div className='flex justify-between items-center'>
             <Label>Choose water duration:</Label>
-            <Select value={duration} onValueChange={setDuration}>
+            <Select value={duration?.toString()} onValueChange={(value) => setDuration(Number(value))}>
               <SelectTrigger className='w-[180px]'>
                 <SelectValue placeholder='Duration' />
               </SelectTrigger>
@@ -57,8 +83,12 @@ export default function AddNewReminder({ isDisabled }: AddNewReminderProps) {
         </div>
         <DialogFooter>
           <div className='flex justify-between w-full'>
-            <Button variant='outline'>Cancel</Button>
-            <Button>Save</Button>
+            <Button variant='outline' onClick={onClose}>
+              Cancel
+            </Button>
+            <Button onClick={onSave} disabled={!time || !duration}>
+              Save
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>

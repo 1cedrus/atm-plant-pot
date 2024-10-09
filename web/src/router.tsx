@@ -1,7 +1,7 @@
 import { createBrowserRouter, createRoutesFromElements, Route } from 'react-router-dom';
 import NotFound from '@/pages/NotFound';
 import Login from '@/pages/Login';
-import { Outlet } from '@/components/Outlet';
+import Outlet from '@/components/Outlet';
 import MockDashboard from '@/pages/Dashboard';
 import WateringMode from '@/pages/WateringMode';
 import LEDSettings from '@/pages/LEDSettings';
