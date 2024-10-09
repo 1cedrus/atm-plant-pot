@@ -9,6 +9,10 @@ class MoistureReadingBase(BaseModel):
     timestamp: datetime
     moisture_level: float
 
+    class Config:
+        orm_mode: True
+        from_attributes = True
+
 
 class MoistureReadingCreate(MoistureReadingBase):
     pass
@@ -20,6 +24,7 @@ class MoistureReading(MoistureReadingBase):
 
     class Config:
         orm_mode: True
+        from_attributes = True
 
 
 class PlantBase(BaseModel):

@@ -1,10 +1,15 @@
-import datetime
+from datetime import datetime
+from pydoc_data.topics import topics
+
 from passlib.context import CryptContext
 import hashlib
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean, Time
 from sqlalchemy.orm import relationship
 from database.database import Base
+from zoneinfo import ZoneInfo
+from routers import topic
 
+from routers.topic import WateringMode
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -39,7 +44,7 @@ class MoistureReading(Base):
     __tablename__ = "moisture_readings"
 
     id = Column(Integer, primary_key=True, index=True)
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(ZoneInfo("Asia/Bangkok")))
     moisture_level = Column(Float)
     plant_id = Column(Integer, ForeignKey("plants.id"))
 
@@ -55,7 +60,7 @@ class WaterLevel(Base):
     __tablename__ = "water_level"
 
     id = Column(Integer, primary_key=True, index=True)
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(ZoneInfo("Asia/Bangkok")))
     water_level = Column(Integer, default=0)
     plant_id = Column(Integer, ForeignKey("plants.id"))
 
@@ -68,8 +73,8 @@ class Config(Base):
     id = Column(Integer, primary_key=True, index=True)
     hash_password = Column(String, default=hash_password("1234"))
     real_time_position = Column(String, default="Hanoi")
-    led_mode = Column(String, default="off")
-    mode = Column(String, default="ADAPTIVE")
+    led_mode = Column(String, default=topic.LedMode.OFF.value)
+    mode = Column(String, default=WateringMode.AUTOMATIC.value)
     plant_id = Column(Integer, ForeignKey("plants.id"))
 
     plant = relationship("Plant", back_populates="config")
@@ -84,18 +89,29 @@ class Led(Base):
     red = Column(Integer, default=0)
     green = Column(Integer, default=0)
     blue = Column(Integer, default=0)
-    state = Column(Integer, default=0)
+    state = Column(Integer, default=topic.ALedMode.OFF.value)
     plant_id = Column(Integer, ForeignKey("plants.id"))
 
     plant = relationship("Plant", back_populates="led")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "brightness": self.brightness,
+            "red": self.red,
+            "green": self.green,
+            "blue": self.blue,
+            "state": self.state
+        }
 
 
 class Watering_Schedule(Base):
     __tablename__ = "watering_schedule"
 
     id = Column(Integer, primary_key=True, index=True)
-    time = Column(Time, default=datetime.datetime.utcnow().time)
+    time = Column(DateTime, default=lambda: datetime.now(ZoneInfo("Asia/Bangkok")))
     duration = Column(Integer, default=5)
+    state = Column(Boolean, default=True)
     watering_id = Column(Integer, ForeignKey("watering.id"))
 
     watering = relationship("Watering", back_populates="watering_schedule")
@@ -119,7 +135,7 @@ class Weather(Base):
     temp = Column(Float)
     humidity = Column(Float)
     conditions = Column(String)
-    datetime = Column(DateTime, default=datetime.datetime.utcnow)
+    datetime = Column(DateTime, default=lambda: datetime.now(ZoneInfo("Asia/Bangkok")))
     description = Column(String)
     cloudcover = Column(Float)
     precip = Column(Float)

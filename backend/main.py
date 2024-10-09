@@ -6,7 +6,7 @@ import mqtt
 import ws
 from database.database import engine, SessionLocal, Base
 from database.db_init import init_db
-from routers import user, mqtt_router, routers
+from routers import user, mqtt_router, routers, scheduler_router
 from water_scheduler import init_scheduler
 
 
@@ -24,6 +24,7 @@ app.include_router(user.router)
 app.include_router(mqtt_router.router)
 app.include_router(routers.router)
 app.include_router(ws.router)
+app.include_router(scheduler_router.router)
 
 # Tạo các bảng
 Base.metadata.create_all(bind=engine)

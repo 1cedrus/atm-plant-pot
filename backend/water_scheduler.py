@@ -8,7 +8,6 @@ from models.models import Watering_Schedule, Config
 
 scheduler = AsyncIOScheduler()
 
-
 def add_all_schedule():
     db = get_db_other()
     try:
@@ -16,18 +15,21 @@ def add_all_schedule():
         if db_schedules:
             from routers.mqtt_router import watering_job # tránh lỗi import vòng tròn
             for db_schedule in db_schedules:
+                # if not db_schedule.is_active:
+                #     continue
                 db_time = db_schedule.time
-                hour = (db_time.hour + 7) % 24
+                # hour = (db_time.hour + 7) % 24
+                hour = db_time.hour
                 minute = db_time.minute
-                duration = db_schedule.duration
-                scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(db_schedule.id), args=[duration])
+                scheduler_id = db_schedule.id
+                scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(db_schedule.id), args=[scheduler_id])
                 print(f"add schedule {db_schedule.id} at {hour}:{minute}")
     finally:
         db.close()
 
 def add_a_schedule(schedule_id, hour, minute):
     from routers.mqtt_router import watering_job # tránh lỗi import vòng tròn
-    scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(schedule_id))
+    scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(schedule_id), args=[schedule_id])
     print(f"add schedule {schedule_id} at {hour}:{minute}")
 
 def remove_all_schedule():
@@ -46,16 +48,21 @@ def stop_scheduler():
     scheduler.shutdown()
     print("stop scheduler")
 
+# def init_scheduler():
+#     db = get_db_other()
+#     try:
+#         my_config = db.query(Config).first()
+#         if my_config:
+#             if my_config.mode == "ADAPTIVE":
+#                 add_all_schedule()
+#                 start_scheduler()
+#             else:
+#                 stop_scheduler()
+#     finally:
+#         db.close()
+#     print("init scheduler")
+
 def init_scheduler():
-    db = get_db_other()
-    try:
-        my_config = db.query(Config).first()
-        if my_config:
-            if my_config.mode == "ADAPTIVE":
-                add_all_schedule()
-                start_scheduler()
-            else:
-                stop_scheduler()
-    finally:
-        db.close()
+    add_all_schedule()
+    start_scheduler()
     print("init scheduler")

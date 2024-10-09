@@ -6,13 +6,23 @@ class Topic(Enum):
     WATER_PUMP_TOPIC = "cmnd/water/pump"
     SOIL_MOISTURE_TOPIC = "cmnd/soil-moisture/data"
     WATER_LEVEL_TOPIC = "cmnd/water/level"
-    THRESHOLD_TOPIC = "cmnd/soil-moisture/threshold"
-    SETTINGS_TOPIC = "cmnd/settings"
+    AUTOMATIC_TOPIC = "cmnd/settings/automatic"
+    SETTINGS_TOPIC = "cmnd/settings/mode"
 
 class Watering(Enum):
     ON = 1
     OFF = 0
 
 class WateringMode(Enum):
-    MANUAL = 0
-    AUTOMATIC = 1
+    MANUAL = 'manual'
+    AUTOMATIC = 'automatic'
+
+class LedMode(Enum):
+    REALTIME = 'realtime'
+    CUSTOM = 'custom'
+    OFF = 'off'
+
+class ALedMode(Enum):
+    ON = 0
+    STARLIGHT = 1
+    OFF = 2

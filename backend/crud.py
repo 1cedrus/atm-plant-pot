@@ -1,12 +1,15 @@
 from datetime import datetime
 
+from fastapi import HTTPException
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.testing.plugin.plugin_base import config
 
 from database.database import get_db
-from models.models import Plant, MoistureReading, Config, Led, Watering, WaterLevel, Watering_Schedule
+from models.models import Plant, MoistureReading, Config, Led, Watering, WaterLevel, Watering_Schedule, Weather
+from schemas.mqtt_rq_schemas import WaterShedule
 from schemas.schemas import PlantCreate, MoistureReadingCreate, ConfigCreate, LedCreate
+from schemas import schemas
 
 
 # Plant CRUD operations
@@ -32,7 +35,7 @@ def create_moisture_reading(db: Session, moisture: str, plant_id: int):
 
 def get_moisture_readings(db: Session, plant_id: int ,from_: datetime | None = None, to: datetime | None = None):
     if from_ is None and to is None:
-        return db.query(MoistureReading).filter(MoistureReading.plant_id == plant_id).order_by(MoistureReading.timestamp.desc()).limit(5).all()
+        return db.query(MoistureReading).filter(MoistureReading.plant_id == plant_id).order_by(MoistureReading.timestamp.desc()).first()
     return db.query(MoistureReading).filter(MoistureReading.plant_id == plant_id, MoistureReading.timestamp >= from_, MoistureReading.timestamp <= to).all()
 
 
@@ -58,8 +61,8 @@ def create_led(db: Session, led: LedCreate, plant_id: int):
     return db_led
 
 
-def get_leds(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(Led).offset(skip).limit(limit).all()
+def get_leds(db: Session):
+    return db.query(Led).all()
 
 def set_led(db: Session, led_id: int, red: int, green: int, blue: int, state: int, brightness: int):
     db_led = db.query(Led).filter(Led.id == led_id).first()
@@ -85,12 +88,40 @@ def create_water_level(db: Session, water_level: int, plant_id: int):
     return db_water_level
 
 def get_water_level(db: Session, plant_id: int):
-    return db.query(WaterLevel).filter(WaterLevel.plant_id == plant_id).first()
+    return db.query(WaterLevel).filter(WaterLevel.plant_id == plant_id).order_by(WaterLevel.timestamp.desc()).first()
 
-def create_watering_schedule(db: Session, water_id: int, schedules: list[dict]):
-    for schedule in schedules:
-        db_schedule = Watering_Schedule(**schedule, watering_id=water_id)
-        db.add(db_schedule)
-        db.commit()
-        db.refresh(db_schedule)
+# def create_watering_schedules(db: Session, water_id: int, schedules: list[dict]):
+#     for schedule in schedules:
+#         db_schedule = Watering_Schedule(**schedule, watering_id=water_id)
+#         db.add(db_schedule)
+#         db.commit()
+#         db.refresh(db_schedule)
+#     return True
+
+def create_watering_schedule(db: Session, water_id: int, schedule: WaterShedule):
+    db_schedule = Watering_Schedule(**schedule.dict(), watering_id=water_id)
+    db.add(db_schedule)
+    db.commit()
+    db.refresh(db_schedule)
+    return db_schedule
+
+def update_watering_schedule(db: Session, schedule_id: int, schedule: WaterShedule):
+    db_schedule = db.query(Watering_Schedule).filter(Watering_Schedule.id == schedule_id).first()
+    if not db_schedule:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    for key, value in schedule.dict().items():
+        setattr(db_schedule, key, value)
+    db.commit()
+    db.refresh(db_schedule)
+    return db_schedule
+
+def delete_watering_schedule(db: Session, schedule_id: int):
+    db_schedule = db.query(Watering_Schedule).filter(Watering_Schedule.id == schedule_id).first()
+    if not db_schedule:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    db.delete(db_schedule)
+    db.commit()
     return True
+
+def get_weather(db: Session):
+    return db.query(Weather).order_by(Weather.datetime.desc()).first()

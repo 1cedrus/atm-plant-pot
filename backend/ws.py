@@ -1,7 +1,8 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, APIRouter
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, APIRouter, Depends
 from typing import List, Dict
 from database.database import get_db_other
-from models.models import MoistureReading, WaterLevel, Weather
+from models.models import MoistureReading, WaterLevel, Weather, Config
+from utils import pin_authenticate
 
 router = APIRouter()
 
@@ -29,7 +30,6 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-        await websocket.send_json({"type": "connected", "data": get_lastest_data()})
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)

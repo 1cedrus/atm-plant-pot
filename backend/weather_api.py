@@ -57,31 +57,30 @@ async def fetch_weather_and_publish():
             datetime_obj = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
             with get_db_session() as db:
                 weather_data = db.query(Weather).first()
-            if not weather_data:
-                weather_data = Weather(datetime=datetime_obj,
-                                       temp=data["currentConditions"]["temp"],
-                                       humidity=data["currentConditions"]["humidity"],
-                                       conditions=data["currentConditions"]["conditions"],
-                                       description=data["days"][0]["description"],
-                                       cloudcover=data["currentConditions"]["cloudcover"],
-                                       precip=data["currentConditions"]["precip"],
-                                       precipprob=data["currentConditions"]["precipprob"],
-                                       solarradiation=data["currentConditions"]["solarradiation"],
-                                       icon=data["currentConditions"]["icon"])
-                db.add(weather_data)
-                db.commit()
-                db.refresh(weather_data)
-            else:
-                weather_data.datetime = datetime_obj
-                weather_data.temp = data["currentConditions"]["temp"]
-                weather_data.humidity = data["currentConditions"]["humidity"]
-                weather_data.conditions = data["currentConditions"]["conditions"]
-                weather_data.description = data["days"][0]["description"]
-                weather_data.cloudcover = data["currentConditions"]["cloudcover"]
-                weather_data.precip = data["currentConditions"]["precip"]
-                weather_data.precipprob = data["currentConditions"]["precipprob"]
-                weather_data.solarradiation = data["currentConditions"]["solarradiation"]
-                weather_data.icon = data["currentConditions"]["icon"]
+                if not weather_data:
+                    weather_data = Weather(datetime=datetime_obj,
+                                           temp=data["currentConditions"]["temp"],
+                                           humidity=data["currentConditions"]["humidity"],
+                                           conditions=data["currentConditions"]["conditions"],
+                                           description=data["days"][0]["description"],
+                                           cloudcover=data["currentConditions"]["cloudcover"],
+                                           precip=data["currentConditions"]["precip"],
+                                           precipprob=data["currentConditions"]["precipprob"],
+                                           solarradiation=data["currentConditions"]["solarradiation"],
+                                           icon=data["currentConditions"]["icon"])
+                    db.add(weather_data)
+                else:
+                    weather_data.datetime = datetime_obj
+                    weather_data.temp = data["currentConditions"]["temp"]
+                    weather_data.humidity = data["currentConditions"]["humidity"]
+                    weather_data.conditions = data["currentConditions"]["conditions"]
+                    weather_data.description = data["days"][0]["description"]
+                    weather_data.cloudcover = data["currentConditions"]["cloudcover"]
+                    weather_data.precip = data["currentConditions"]["precip"]
+                    weather_data.precipprob = data["currentConditions"]["precipprob"]
+                    weather_data.solarradiation = data["currentConditions"]["solarradiation"]
+                    weather_data.icon = data["currentConditions"]["icon"]
+
                 db.commit()
                 db.refresh(weather_data)
 

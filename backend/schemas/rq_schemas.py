@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 
 from pydantic import BaseModel
 
@@ -16,3 +16,8 @@ class UpdateWateringMode(BaseModel):
 
 class UpdateLedMode(BaseModel):
     mode: str
+
+# class Reminder(BaseModel):
+#     time: datetime
+#     duration: int
+#     state: bool

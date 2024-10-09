@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from database.database import SessionLocal
 from database.db_init import init_db
-from water_scheduler import init_scheduler
+from water_scheduler import init_scheduler, stop_scheduler
 from weather_api import periodic_weather_update
 
 iot = IotCore()
@@ -30,5 +30,6 @@ async def lifespan(app: FastAPI):
     init_scheduler()
     yield
     task.cancel()
+    stop_scheduler()
 
 

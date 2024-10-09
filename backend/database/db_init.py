@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
-from models.models import Plant, Led, Config, Watering, Watering_Schedule
+from models.models import Plant, Led, Config, Watering, Watering_Schedule, WaterLevel
+from routers.topic import WateringMode, LedMode, ALedMode
 from schemas.schemas import PlantCreate, LedCreate, ConfigCreate
 from utils import hash_password
 from water_scheduler import add_all_schedule
@@ -21,14 +22,14 @@ def init_db(db: Session):
     leds = db.query(Led).all()
     if len(leds) < 2:
         for i in range(2 - len(leds)):
-            default_led = LedCreate(name=f"led_{i + 1}", red=0, green=0, blue=0, brightness=0, state=0)
+            default_led = LedCreate(name=f"led_{i + 1}", red=0, green=0, blue=0, brightness=0, state=ALedMode.OFF.value)
             db_led = Led(**default_led.model_dump(), plant_id=db_plant.id)
             db.add(db_led)
         db.commit()
 
     my_config = db.query(Config).first()
     if not my_config:
-        default_config = ConfigCreate(real_time_position="Hanoi", led_mode="off",mode="ADAPTIVE",
+        default_config = ConfigCreate(real_time_position="Hanoi", led_mode=LedMode.OFF.value,mode=WateringMode.AUTOMATIC.value,
                                       hash_password=hash_password("1234"))
         db_config = Config(**default_config.model_dump(), plant_id=db_plant.id)
         db.add(db_config)
@@ -38,6 +39,12 @@ def init_db(db: Session):
     if not my_watering:
         default_watering = Watering(watering_threshold=200, watering_duration=5, plant_id=db_plant.id)
         db.add(default_watering)
+        db.commit()
+
+    my_water_level = db.query(WaterLevel).first()
+    if not my_water_level:
+        default_water_level = WaterLevel(water_level=0, plant_id=db_plant.id)
+        db.add(default_water_level)
         db.commit()
 
     my_schedules = db.query(Watering_Schedule).all()
