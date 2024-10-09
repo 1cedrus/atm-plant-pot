@@ -1,33 +1,49 @@
 import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Sprout, Waves } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useNavigate } from 'react-router-dom';
-import { useAuthority } from '@/providers/AuthenticationProvider';
+import { Label } from '@/components/ui/label';
 import { DatePickerWithRange } from '@/components/ui/date-picker-with-range';
 import { useQuery } from '@tanstack/react-query';
-import { getSoilMoisture, getSoilMoistureData, getWaterLevel, getWeather, stopWater, water } from '@/lib/apis';
+import {
+  getSoilMoisture,
+  getSoilMoistureData,
+  getWaterLevel,
+  getWeather,
+  stopWater,
+  updatePosition,
+  water,
+} from '@/lib/apis';
 import { timeAgo } from '@/lib/time';
 import { addDays, format, subDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { WebSocketEventType } from '@/types';
+import { useBackdrop } from '@/components/ui/backdrop';
+import { Input } from '@/components/ui/input';
+import useToast from '@/hooks/useToast';
+import { ReloadIcon } from '@radix-ui/react-icons';
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuthority();
+  const { onOpen, onClose } = useBackdrop();
+  const [tryPosition, setTryPosition] = useState<string>('');
+  const [onChecking, setOnChecking] = useState<boolean>(false);
   const [isWatering, setIsWatering] = useState<boolean>(false);
+  const { toast } = useToast();
   const [date, setDate] = useState<DateRange | undefined>({
     from: subDays(new Date(Date.now()), 30),
     to: new Date(Date.now()),
   });
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated]);
 
   const { data: soilMoisture } = useQuery({
     queryKey: [WebSocketEventType.SoilMoisture],
@@ -58,18 +74,43 @@ export default function Dashboard() {
   });
 
   const handleWatering = async () => {
-    let msg;
-
     if (isWatering) {
-      msg = await stopWater();
+      await stopWater();
     } else {
-      msg = await water();
+      await water();
     }
 
     setIsWatering((prev) => !prev);
-
-    console.log(msg);
   };
+
+  const handleTryPosition = async () => {
+    setOnChecking(true);
+
+    try {
+      await updatePosition(tryPosition);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update position',
+        variant: 'destructive',
+      });
+    }
+
+    setTryPosition('');
+    setOnChecking(false);
+  };
+
+  useEffect(() => {
+    if (!soilMoisture || !waterLevel || !weather || !soilMoistureData) {
+      onOpen();
+    } else {
+      onClose();
+    }
+
+    return () => {
+      onClose();
+    };
+  }, [soilMoisture, waterLevel, weather, soilMoistureData]);
 
   return (
     <>
@@ -114,23 +155,63 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className='flex flex-row justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Current Weather</CardTitle>
-            <img src={`src/assets/weather-icon/${weather?.icon}.svg`} className='h-10 w-10 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            {weather ? (
-              <div>
-                <div className='text-2xl font-bold'>{weather.temp}°F</div>
-                <div className='text-muted-foreground'>Humidity: {weather.humidity}%</div>
-                <div className='text-muted-foreground'>{weather.description}</div>
+        <Dialog>
+          <DialogTrigger>
+            <Card>
+              <CardHeader className='flex flex-row justify-between space-y-0 pb-2'>
+                <CardTitle className='text-sm font-medium'>Current Weather</CardTitle>
+                <img src={`src/assets/weather-icon/${weather?.icon}.svg`} className='h-10 w-10 text-muted-foreground' />
+              </CardHeader>
+              <CardContent className='text-left'>
+                {weather ? (
+                  <div>
+                    <div className='font-bold'>{weather?.address}</div>
+                    <div className='text-2xl font-bold'>{weather.temp}°F</div>
+                    <div className='text-muted-foreground'>Humidity: {weather.humidity}%</div>
+                    <div className='text-muted-foreground'>{weather.description}</div>
+                  </div>
+                ) : (
+                  <div>Loading weather data...</div>
+                )}
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Weather Information</DialogTitle>
+              <DialogDescription>
+                The current weather in update using the Visual Crossing Weather API.
+              </DialogDescription>
+              <div className='flex gap-4 py-4 items-center '>
+                <img src={`src/assets/weather-icon/${weather?.icon}.svg`} className='h-20 w-20 text-muted-foreground' />
+                <div>
+                  <div className='font-bold'>{weather?.address}</div>
+                  <div className='text-2xl font-bold'>{weather?.temp}°F</div>
+                  <div className='text-muted-foreground'>Humidity: {weather?.humidity}%</div>
+                  <div className='text-muted-foreground'>{weather?.description}</div>
+                </div>
               </div>
-            ) : (
-              <div>Loading weather data...</div>
-            )}
-          </CardContent>
-        </Card>
+            </DialogHeader>
+            <DialogFooter>
+              <div className='flex w-full justify-between items-end gap-2'>
+                <div className='w-full'>
+                  <Label htmlFor='location'>Location:</Label>
+                  <Input
+                    id='location'
+                    placeholder='Enter location you want to show weather information'
+                    className='w-full'
+                    autoFocus={false}
+                    value={tryPosition}
+                    onChange={(e) => setTryPosition(e.currentTarget.value)}
+                  />
+                </div>
+                <Button disabled={!tryPosition} onClick={handleTryPosition} className='w-[5rem]'>
+                  {onChecking ? <ReloadIcon className='h-4 w-4 animate-spin' /> : 'Check'}
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       <Card className='mt-6'>
         <CardHeader className='flex flex-row justify-between'>

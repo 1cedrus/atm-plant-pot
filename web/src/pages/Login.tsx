@@ -24,9 +24,7 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const {
-         access_token,
-      } = await login(pin);
+      const { access_token } = await login(pin);
 
       setAuthToken(access_token);
 

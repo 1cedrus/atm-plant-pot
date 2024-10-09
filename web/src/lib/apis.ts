@@ -1,7 +1,17 @@
-import { LED, LEDMode, Reminder, SoilMoisture, WateringMode, WaterLevel, Weather } from '@/types';
+import {
+  AutomaticSettings,
+  LED,
+  LEDMode,
+  ManualSettings,
+  Reminder,
+  SoilMoisture,
+  WateringMode,
+  WaterLevel,
+  Weather,
+} from '@/types';
 import axios from 'axios';
 
-export const login = async (pin: string): Promise<{access_token: string}> => {
+export const login = async (pin: string): Promise<{ access_token: string }> => {
   return axios({
     method: 'post',
     url: '/api/login',
@@ -64,7 +74,7 @@ export const getPosition = async () => {
   });
 };
 
-export const updatePosition = async (position: number) => {
+export const updatePosition = async (position: string) => {
   return axios({
     method: 'post',
     url: '/api/position',
@@ -92,10 +102,17 @@ export const getWateringMode = async (): Promise<WateringMode> => {
   });
 };
 
+export const deleteReminder = async (reminder: Reminder) => {
+  return axios({
+    method: 'delete',
+    url: `/api/reminder/${reminder.id}`,
+  });
+};
+
 export const updateReminder = async (reminder: Reminder) => {
   return axios({
     method: 'post',
-    url: `/api/reminder${reminder.id}`,
+    url: `/api/reminder/${reminder.id}`,
     data: reminder,
   });
 };
@@ -108,14 +125,11 @@ export const newReminder = async (reminder: Reminder) => {
   });
 };
 
-export const updateWateringModeSettings = async (mode: WateringMode, settings: any) => {
+export const updateWateringModeSettings = async (settings: AutomaticSettings) => {
   return axios({
     method: 'post',
-    url: '/api/watering-mode',
-    data: {
-      mode,
-      settings,
-    },
+    url: `/api/mqtt/${WateringMode.Automatic}`,
+    data: settings,
   });
 };
 
@@ -129,7 +143,7 @@ export const setWateringMode = async (mode: WateringMode) => {
   });
 };
 
-export const getWateringModeSettings = async (mode: WateringMode) => {
+export const getWateringModeSettings = async (mode: WateringMode): Promise<AutomaticSettings | ManualSettings> => {
   return axios({
     method: 'get',
     url: '/api/watering-mode',
@@ -139,13 +153,15 @@ export const getWateringModeSettings = async (mode: WateringMode) => {
   });
 };
 
-export const updateLED = async (led: LED) => {
+export const updateLED = async (customStr: string) => {
   return axios({
     method: 'post',
-    url: `/api/led-settings/${led.id}`,
-    data: led,
+    url: `/api/mqtt/led-custom`,
+    data: {
+      message: customStr,
+    },
   });
-}
+};
 
 export const getLEDCustomSettings = async (): Promise<LED[]> => {
   return axios({

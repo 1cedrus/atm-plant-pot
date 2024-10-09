@@ -24,8 +24,8 @@ interface AddNewReminderProps {
 export default function AddNewReminder({ isDisabled }: AddNewReminderProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [duration, setDuration] = useState<number>();
-  const [time, setTime] = useState<Date>();
+  const [duration, setDuration] = useState<number | undefined>(5);
+  const [time, setTime] = useState<Date | undefined>(new Date(Date.now()));
 
   const newReminderMutation = useMutation({
     mutationFn: (reminder: Reminder) => newReminder(reminder),
@@ -35,8 +35,8 @@ export default function AddNewReminder({ isDisabled }: AddNewReminderProps) {
   });
 
   const onClose = () => {
-    setTime(undefined);
-    setDuration(undefined);
+    setDuration(5);
+    setTime(new Date(Date.now()));
     setOpen(false);
   };
 

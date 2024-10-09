@@ -5,8 +5,8 @@ import { AlertTriangle, Home } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className='min-h-screen bg-gray-100 flex items-center justify-center p-4'>
-      <Card className='w-full max-w-md'>
+    <div className='min-h-screen w-full bg-gray-100 flex items-center justify-center p-4'>
+      <Card className='w-full'>
         <CardHeader className='text-center'>
           <div className='w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4'>
             <AlertTriangle className='h-10 w-10 text-yellow-600' />

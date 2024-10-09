@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AuthProvider from '@/providers/AuthenticationProvider.tsx';
 import axios from 'axios';
 import { AppProvider } from './providers/AppProvider.tsx';
+import { BackdropProvider } from './components/ui/backdrop.tsx';
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL as string;
 axios.defaults.headers['Access-Control-Allow-Origin'] = '*';
@@ -21,7 +22,9 @@ createRoot(document.getElementById('root')!).render(
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <AppProvider>
-          <App />
+          <BackdropProvider>
+            <App />
+          </BackdropProvider>
         </AppProvider>
       </QueryClientProvider>
     </AuthProvider>

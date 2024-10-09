@@ -33,9 +33,9 @@ export enum WebSocketEventType {
   SoilMoisture = 'moisture',
   WaterLevel = 'water_level',
   Weather = 'weather',
-  Position = 'position',
   WateringMode = 'watering_mode',
   LEDMode = 'led_mode',
+  // Also another event types
 }
 
 export interface WebSocketEvent {
@@ -62,15 +62,16 @@ export interface Weather {
   precipprob: number;
   solarradiation: number;
   icon: string;
+  address: string;
 }
 
 export interface AutomaticSettings {
-  threshold: number;
-  duration: number;
+  threshold?: number;
+  duration?: number;
 }
 
 export interface ManualSettings {
-  realtime: boolean;
+  // realtime?: boolean;
   reminders: Reminder[];
 }
 
