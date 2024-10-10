@@ -13,6 +13,8 @@ from schemas.rq_schemas import Position, MoistureReadingScope, UpdateLedMode
 from schemas.schemas import ConfigBase
 from utils import pin_authenticate
 from schemas import schemas
+from weather_api import fetch_weather_and_publish
+from ws import manager
 
 router = APIRouter(prefix="/api")
 
@@ -23,8 +25,15 @@ async def get_position(config: ConfigBase = Depends(pin_authenticate)):
 
 @router.post("/position", tags=["position"])
 async def update_position(request: Position, config: ConfigBase = Depends(pin_authenticate), db: Session = Depends(get_db)):
-    config.real_time_position = request.position
-    db.commit()
+    try :
+        if await fetch_weather_and_publish(request.position):
+            config.real_time_position = request.position
+            db.commit()
+            await manager.broadcast_json({"type": "weather"})
+        else:
+            raise HTTPException(status_code=400, detail="Error when fetch weather")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Error when fetch weather")
     return {"message": "success"}
 
 @router.get("/soil-moisture", tags=["soil moisture"])
@@ -56,12 +65,13 @@ async def get_watering_mode(mode: str | None = None, config: Config = Depends(pi
 
 @router.get("/led-mode", tags=["led mode"])
 async def get_led_mode(config: Config = Depends(pin_authenticate)):
-    return {"led_mode": config.led_mode}
+    return config.led_mode
 
 @router.post("/led-mode", tags=["led mode"])
 async def update_led_mode(request: UpdateLedMode, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
     config.led_mode = request.mode
     db.commit()
+    await manager.broadcast_json({"type": "led_mode"})
     return {"message": "success change led mode to " + request.mode}
 
 @router.get("/led-settings", tags=["led settings"])

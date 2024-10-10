@@ -132,6 +132,7 @@ class Weather(Base):
     __tablename__ = "weather"
 
     id = Column(Integer, primary_key=True, index=True)
+    address = Column(String)
     temp = Column(Float)
     humidity = Column(Float)
     conditions = Column(String)
@@ -145,6 +146,7 @@ class Weather(Base):
 
     def to_dict(self):
         return {
+            "address": self.address,
             "temp": self.temp,
             "humidity": self.humidity,
             "conditions": self.conditions,

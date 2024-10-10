@@ -8,6 +8,7 @@ class Topic(Enum):
     WATER_LEVEL_TOPIC = "cmnd/water/level"
     AUTOMATIC_TOPIC = "cmnd/settings/automatic"
     SETTINGS_TOPIC = "cmnd/settings/mode"
+    CONNECT_TOPIC = "cmnd/connected"
 
 class Watering(Enum):
     ON = 1

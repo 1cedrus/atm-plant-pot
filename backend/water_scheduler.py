@@ -22,14 +22,14 @@ def add_all_schedule():
                 hour = db_time.hour
                 minute = db_time.minute
                 scheduler_id = db_schedule.id
-                scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(db_schedule.id), args=[scheduler_id])
+                scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(db_schedule.id), args=[scheduler_id], replace_existing=True)
                 print(f"add schedule {db_schedule.id} at {hour}:{minute}")
     finally:
         db.close()
 
 def add_a_schedule(schedule_id, hour, minute):
     from routers.mqtt_router import watering_job # tránh lỗi import vòng tròn
-    scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(schedule_id), args=[schedule_id])
+    scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(schedule_id), args=[schedule_id], replace_existing=True)
     print(f"add schedule {schedule_id} at {hour}:{minute}")
 
 def remove_all_schedule():
@@ -48,6 +48,12 @@ def stop_scheduler():
     scheduler.shutdown()
     print("stop scheduler")
 
+def show_all_schedule():
+    print("All schedule:")
+    jobs = scheduler.get_jobs()
+    for job in jobs:
+        print(job)
+
 # def init_scheduler():
 #     db = get_db_other()
 #     try:
@@ -63,6 +69,8 @@ def stop_scheduler():
 #     print("init scheduler")
 
 def init_scheduler():
+    print("init scheduler...")
     add_all_schedule()
     start_scheduler()
-    print("init scheduler")
+    print("init scheduler successfully")
+    show_all_schedule()

@@ -14,27 +14,35 @@ from schemas.mqtt_rq_schemas import WaterShedule
 from schemas.schemas import ConfigBase
 from utils import pin_authenticate
 from water_scheduler import add_a_schedule
+from ws import manager
 
 router = APIRouter(prefix='/api')
 
 
 
 @router.post('/reminder')
-def new_scheduler(request: WaterShedule, db: Session = Depends(get_db), config: Config = Depends(pin_authenticate)):
+async def new_scheduler(request: WaterShedule, db: Session = Depends(get_db), config: Config = Depends(pin_authenticate)):
     from crud import create_watering_schedule
     print("new_scheduler: ", request.time, type(request.time))
     request.time = request.time.astimezone(tz=timezone(timedelta(hours=7))) # convert to UTC+7
     watering_schedule = create_watering_schedule(db, config.plant_id , request)
     add_a_schedule(watering_schedule.id, watering_schedule.time.hour, watering_schedule.time.minute)
+    await manager.broadcast_json({"type": "reminder"})
+    return {"message": "success"}
 
 @router.post("/reminder/{reminder_id}")
-def update_scheduler(request: WaterShedule, reminder_id: int, db: Session = Depends(get_db), config: Config = Depends(pin_authenticate)):
+async def update_scheduler(request: WaterShedule, reminder_id: int, db: Session = Depends(get_db), config: Config = Depends(pin_authenticate)):
     from crud import update_watering_schedule
     request.time = request.time.astimezone(tz=timezone(timedelta(hours=7)))
-    return update_watering_schedule(db, reminder_id , request)
+    update = update_watering_schedule(db, reminder_id , request)
+    await manager.broadcast_json({"type": "reminder"})
+    return update
 
 @router.delete('/reminder/{reminder_id}')
-def delete_scheduler(reminder_id: int, db: Session = Depends(get_db), config: Config = Depends(pin_authenticate)):
+async def delete_scheduler(reminder_id: int, db: Session = Depends(get_db), config: Config = Depends(pin_authenticate)):
     from crud import delete_watering_schedule
-    return delete_watering_schedule(db, reminder_id)
+    delete_watering_schedule(db, reminder_id)
+    await manager.broadcast_json({"type": "reminder"})
+    return {"message": "success"}
+
 

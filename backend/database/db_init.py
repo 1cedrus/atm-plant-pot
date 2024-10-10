@@ -20,8 +20,8 @@ def init_db(db: Session):
         db_plant = db.query(Plant).first()
 
     leds = db.query(Led).all()
-    if len(leds) < 2:
-        for i in range(2 - len(leds)):
+    if len(leds) < 3:
+        for i in range(3 - len(leds)):
             default_led = LedCreate(name=f"led_{i + 1}", red=0, green=0, blue=0, brightness=0, state=ALedMode.OFF.value)
             db_led = Led(**default_led.model_dump(), plant_id=db_plant.id)
             db.add(db_led)

@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import asyncio
+
+from sqlalchemy.testing.plugin.plugin_base import config
+
 from utils import get_event_loop
 from crud import create_moisture_reading, create_water_level, get_watering, set_led, create_watering_schedule
 from database.database import get_db, get_db_other
-from models.models import Plant, Config, Watering_Schedule
+from models.models import Plant, Config, Watering_Schedule, Led, Watering
 from mqtt import iot
 from schemas.mqtt_rq_schemas import *
 from routers import topic
@@ -13,6 +16,26 @@ from utils import pin_authenticate
 from ws import manager
 
 router = APIRouter(prefix="/api/mqtt")
+
+@iot.accept(topic=str(topic.Topic.CONNECT_TOPIC.value))
+def send_data(request: str):
+    print(f"Connected to broker with message: {request}")
+    db = get_db_other()
+    try:
+        leds = db.query(Led).all()
+        if leds:
+            for led in leds:
+                iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value), f"{str(led.id)},{str(led.red)},{str(led.green)},{str(led.blue)},{str(led.brightness)},{str(led.state)}")
+        config = db.query(Config).first()
+        if config:
+            iot.publish(str(topic.Topic.SETTINGS_TOPIC.value),
+                        "0" if config.mode == str(topic.WateringMode.MANUAL.value) else "1")
+        watering = db.query(Watering).first()
+        if watering:
+            iot.publish(str(topic.Topic.AUTOMATIC_TOPIC.value), f"{str(watering.watering_threshold)},{str(watering.watering_duration)}")
+
+    finally:
+        db.close()
 
 @iot.accept(topic=str(topic.Topic.SOIL_MOISTURE_TOPIC.value))
 def soil_moisture_data(request: str):
@@ -45,14 +68,15 @@ def water_level_data(request: str):
         db.close()
 
 
-@router.post("/led_custom", tags=["led custom"])
-def led_custom(request: UpdateLedCustom, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
+@router.post("/led-custom", tags=["led custom"])
+async def led_custom(request: UpdateLedCustom, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
     list_params = request.message.split(",")
     if len(list_params) != 6:
         raise HTTPException(status_code=400, detail="Invalid data")
     led_id, red, green, blue, brightness, state = map(int, list_params)
     set_led(db, led_id, red, green, blue, state, brightness)
     iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value), request.message)
+    # await manager.broadcast_json({"type": "custom"})
     return {"response": "send data: " + request.message + " to pub cmnd/led/custom"}
 
 
@@ -67,21 +91,23 @@ def water():
     return {"response": "water off"}
 
 async def watering_job(scheduler_id: int):
+    print(f"watering job {scheduler_id} try to run")
     db = get_db_other()
     try:
         config = db.query(Config).first()
         watering_schedule = db.query(Watering_Schedule).filter(Watering_Schedule.id == scheduler_id).first()
         if not watering_schedule:
             return None
-        if config.mode == WateringMode.MANUAL.value and watering_schedule.state:
-            iot.publish(str(topic.Topic.WATER_PUMP_TOPIC.value), topic.Watering.ON.value)
+        if config.mode == topic.WateringMode.MANUAL.value and watering_schedule.state:
+            iot.publish(str(topic.Topic.WATER_PUMP_TOPIC.value), str(topic.Watering.ON.value))
             await asyncio.sleep(watering_schedule.duration)
-            iot.publish(str(topic.Topic.WATER_PUMP_TOPIC.value), topic.Watering.OFF.value)
+            iot.publish(str(topic.Topic.WATER_PUMP_TOPIC.value), str(topic.Watering.OFF.value))
+            print(f"watering job {scheduler_id} run successfully")
     finally:
         db.close()
 
 @router.post("/automatic", tags=["automatic watering"])
-def automatic_setting(request: AutomacticSetting, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
+async def automatic_setting(request: AutomacticSetting, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
     watering = get_watering(db, config.plant_id)
     if not watering:
         raise HTTPException(status_code=404, detail="Watering not found")
@@ -89,6 +115,7 @@ def automatic_setting(request: AutomacticSetting, config: Config = Depends(pin_a
     watering.watering_duration = request.duration
     db.commit()
     iot.publish(str(topic.Topic.AUTOMATIC_TOPIC.value), str(request.threshold) + ";" + str(request.duration))
+    await manager.broadcast_json({"type": "automatic"})
     return {"response": "set threshold and duration : " + str(request.threshold) + ";" + str(request.duration)}
 
 
@@ -98,7 +125,8 @@ async def update_watering_mode(request: UpdateWateringMode, config: Config = Dep
     db.commit()
     if request.mode == topic.WateringMode.MANUAL.value:
         pass
-    iot.publish(str(topic.Topic.SETTINGS_TOPIC.value), request.mode)
+    iot.publish(str(topic.Topic.SETTINGS_TOPIC.value), "0" if request.mode == topic.WateringMode.MANUAL.value else "1")
+    await manager.broadcast_json({"type": "watering_mode"})
     return {"message": "success change watering mode to " + str(request.mode)}
 
 # @router.post("/water-schedule", tags=["update watering schedule"])
