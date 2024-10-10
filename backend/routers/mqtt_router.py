@@ -20,8 +20,7 @@ router = APIRouter(prefix="/api/mqtt")
 @iot.accept(topic=str(topic.Topic.CONNECT_TOPIC.value))
 def send_data(request: str):
     print(f"Connected to broker with message: {request}")
-    db = get_db_other()
-    try:
+    with get_db_other() as db:
         leds = db.query(Led).all()
         if leds:
             for led in leds:
@@ -34,13 +33,10 @@ def send_data(request: str):
         if watering:
             iot.publish(str(topic.Topic.AUTOMATIC_TOPIC.value), f"{str(watering.watering_threshold)},{str(watering.watering_duration)}")
 
-    finally:
-        db.close()
 
 @iot.accept(topic=str(topic.Topic.SOIL_MOISTURE_TOPIC.value))
 def soil_moisture_data(request: str):
-    db = get_db_other()
-    try:
+    with get_db_other() as db:
         plant_id = db.query(Plant).first().id
         if plant_id:
              moisture_data = create_moisture_reading(db, moisture=request, plant_id=plant_id)
@@ -50,13 +46,11 @@ def soil_moisture_data(request: str):
 
         # Chạy coroutine và chờ hoàn thành
         get_event_loop().run_until_complete(manager.broadcast_json({"type": "moisture"}))
-    finally:
-        db.close()
+
 
 @iot.accept(topic=str(topic.Topic.WATER_LEVEL_TOPIC.value))
 def water_level_data(request: str):
-    db = get_db_other()
-    try:
+    with get_db_other() as db:
         plant_id = db.query(Plant).first().id
         if plant_id:
             create_water_level(db, water_level=int(request), plant_id=plant_id)
@@ -64,8 +58,7 @@ def water_level_data(request: str):
             raise HTTPException(status_code=404, detail="Plant not found")
         get_event_loop().run_until_complete(manager.broadcast_json({"type": "water_level" }))
         print(f"Water level data : {request}")
-    finally:
-        db.close()
+
 
 
 @router.post("/led-custom", tags=["led custom"])
@@ -92,8 +85,7 @@ def water():
 
 async def watering_job(scheduler_id: int):
     print(f"watering job {scheduler_id} try to run")
-    db = get_db_other()
-    try:
+    with get_db_other() as db:
         config = db.query(Config).first()
         watering_schedule = db.query(Watering_Schedule).filter(Watering_Schedule.id == scheduler_id).first()
         if not watering_schedule:
@@ -103,8 +95,6 @@ async def watering_job(scheduler_id: int):
             await asyncio.sleep(watering_schedule.duration)
             iot.publish(str(topic.Topic.WATER_PUMP_TOPIC.value), str(topic.Watering.OFF.value))
             print(f"watering job {scheduler_id} run successfully")
-    finally:
-        db.close()
 
 @router.post("/automatic", tags=["automatic watering"])
 async def automatic_setting(request: AutomacticSetting, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
@@ -128,11 +118,3 @@ async def update_watering_mode(request: UpdateWateringMode, config: Config = Dep
     iot.publish(str(topic.Topic.SETTINGS_TOPIC.value), "0" if request.mode == topic.WateringMode.MANUAL.value else "1")
     await manager.broadcast_json({"type": "watering_mode"})
     return {"message": "success change watering mode to " + str(request.mode)}
-
-# @router.post("/water-schedule", tags=["update watering schedule"])
-# async def update_water_schedule(request: UpdateWaterSchedule, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
-#     watering = get_watering(db, config.plant_id)
-#     if not watering:
-#         raise HTTPException(status_code=404, detail="Watering not found")
-#     create_watering_schedule(db, watering.id, request.schedules)
-#     return {"message": "success change watering schedule" }

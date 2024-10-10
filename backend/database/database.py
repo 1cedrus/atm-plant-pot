@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -24,7 +23,18 @@ def get_db():
     finally:
         db.close()  # Đảm bảo đóng session khi hoàn thành
 
+# def get_db_other():
+#     generator = get_db()
+#     session = next(generator)
+#     return session
+
+
+@contextmanager
 def get_db_other():
-    generator = get_db()
-    session = next(generator)
-    return session
+    db = None
+    try:
+        db = SessionLocal()
+        yield db  # Trả về session để sử dụng
+    finally:
+        if db is not None:
+            db.close()

@@ -9,8 +9,7 @@ from models.models import Watering_Schedule, Config
 scheduler = AsyncIOScheduler()
 
 def add_all_schedule():
-    db = get_db_other()
-    try:
+    with get_db_other() as db:
         db_schedules = db.query(Watering_Schedule).all()
         if db_schedules:
             from routers.mqtt_router import watering_job # tránh lỗi import vòng tròn
@@ -24,8 +23,6 @@ def add_all_schedule():
                 scheduler_id = db_schedule.id
                 scheduler.add_job(watering_job, 'cron', hour=hour, minute=minute, id=str(db_schedule.id), args=[scheduler_id], replace_existing=True)
                 print(f"add schedule {db_schedule.id} at {hour}:{minute}")
-    finally:
-        db.close()
 
 def add_a_schedule(schedule_id, hour, minute):
     from routers.mqtt_router import watering_job # tránh lỗi import vòng tròn

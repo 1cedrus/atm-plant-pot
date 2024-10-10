@@ -8,18 +8,14 @@ router = APIRouter()
 
 
 def get_lastest_data():
-    db = get_db_other()
-    response = {}
-    try:
+    with get_db_other() as db:
+        response = {}
         moisure = db.query(MoistureReading).order_by(MoistureReading.timestamp.desc()).first()
         response["moisture"] = moisure.moisture_level if moisure else None
         water_level = db.query(WaterLevel).order_by(WaterLevel.timestamp.desc()).first()
         response["water_level"] = water_level.water_level if water_level else None
         weather = db.query(Weather).order_by(Weather.datetime.desc()).first()
         response["weather"] = weather.to_dict() if weather else None
-
-    finally:
-        db.close()
     return response
 
 # Lưu trữ danh sách các kết nối WebSocket
