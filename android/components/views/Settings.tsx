@@ -1,27 +1,77 @@
+import { updatePosition } from "@/apis";
 import { useSession } from "@/providers/AuthenticationProvider";
-import { OperationMode } from "@/types";
-import { Picker } from "@react-native-picker/picker";
+import { transform } from "@babel/core";
 import { useState } from "react";
-import { View,  Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, ToastAndroid } from "react-native";
+import { TextInput } from "react-native";
 
 export default function Settings() {
-  const [mode, setMode] = useState(OperationMode.Realtime);
   const { signOut } = useSession();
+
+  const [tryPosition, setTryPosition] = useState<string>("");
+  const [onChecking, setOnChecking] = useState<boolean>(false);
+
+  const handleTryPosition = async () => {
+    setOnChecking(true);
+
+    try {
+      await updatePosition(tryPosition);
+      ToastAndroid.showWithGravity(
+        "Position updated successfully!",
+        ToastAndroid.SHORT,
+        ToastAndroid.TOP
+      );
+    } catch (error) {
+      ToastAndroid.showWithGravity(
+        "Failed to update position",
+        ToastAndroid.SHORT,
+        ToastAndroid.TOP
+      );
+    }
+
+    setTryPosition("");
+    setOnChecking(false);
+  };
 
   return (
     <View style={styles.container}>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16 }}>Operation mode</Text>
-        <Picker selectedValue={mode} onValueChange={setMode}>
-          <Picker.Item label="Realtime" value={OperationMode.Realtime} />
-          <Picker.Item label="Adaptive" value={OperationMode.Adaptive} />
-        </Picker>
+      <View style={{ gap: 10 }}>
+        <TextInput
+          style={{
+            height: 40,
+            borderColor: "gray",
+            borderWidth: 1,
+            borderRadius: 5,
+            paddingLeft: 15,
+          }}
+          placeholder="New position"
+          value={tryPosition}
+          onChangeText={setTryPosition}
+          autoCapitalize="none"
+        />
+        <Pressable
+          disabled={onChecking || !tryPosition}
+          style={{
+            ...styles.button,
+            borderColor: "#000",
+            backgroundColor: onChecking ? "#ccc" : "#fff",
+          }}
+          onPress={handleTryPosition}
+        >
+          <Text style={styles.text}>Check</Text>
+        </Pressable>
       </View>
       <View style={{ gap: 10 }}>
-        <Pressable style={{...styles.button, borderColor: '#000'}} onPress={signOut}>
+        <Pressable
+          style={{ ...styles.button, borderColor: "#000" }}
+          onPress={signOut}
+        >
           <Text style={styles.text}>Change password</Text>
         </Pressable>
-        <Pressable style={{...styles.button, borderColor: '#000'}} onPress={signOut}>
+        <Pressable
+          style={{ ...styles.button, borderColor: "#000" }}
+          onPress={signOut}
+        >
           <Text style={styles.text}>Sign out</Text>
         </Pressable>
       </View>
@@ -34,7 +84,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#fff",
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
   },
   card: {
     borderStyle: "solid",
@@ -96,7 +146,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   button: {
-    borderRadius: 15,
+    borderRadius: 5,
     padding: 10,
     borderWidth: 1,
     borderStyle: "solid",
