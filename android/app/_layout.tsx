@@ -3,8 +3,8 @@ import { SessionProvider } from "@/providers/AuthenticationProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import axios from "axios";
 import { AppProvider } from "@/providers/AppProvider";
-import { StatusBar } from "react-native";
 import { BackdropProvider } from "@/components/Backdrop";
+import { StatusBar } from "expo-status-bar";
 
 axios.defaults.headers["Access-Control-Allow-Origin"] = "*";
 axios.defaults.headers["ngrok-skip-browser-warning"] = "true";
@@ -13,7 +13,6 @@ axios.interceptors.response.use(function (response) {
 });
 
 const queryClient = new QueryClient();
-StatusBar.setBarStyle("dark-content");
 
 export default function Root() {
   return (
@@ -22,6 +21,7 @@ export default function Root() {
         <AppProvider>
           <BackdropProvider>
             <Slot />
+            <StatusBar style="dark" />
           </BackdropProvider>
         </AppProvider>
       </SessionProvider>
