@@ -5,11 +5,12 @@
 
 #define PUBLISH_SOIL_MOISTURE_DURATION 2000 
 #define PUBLISH_WATER_LEVEL_DURATION 5000
-#define SOIL_MOISTURE_PIN 16
+#define SOIL_MOISTURE_PIN 9
 #define WATER_LEVEL_PIN 10
 #define WATER_PUMP_PIN 11
 #define DEFAULT_THRESHOLD 200
 #define WAIT_FOR_CONNECTION 5000
+#define DEFAULT_DURATION 10000
 
 struct Message {
   char topic[50];
@@ -29,10 +30,12 @@ const char* SOIL_MOISTURE_TOPIC = "cmnd/soil-moisture/data";
 const char* WATER_LEVEL_TOPIC = "cmnd/water/level";
 
 // Use to update threshold at mcu
-const char* THRESHOLD_TOPIC = "cmnd/soil-moisture/threshold";
+const char* AUTOMATIC_TOPIC = "cmnd/settings/automatic";
 
 // Just now, use only to update watering mode
-const char* SETTINGS_TOPIC = "cmnd/settings";
+const char* MODE_TOPIC = "cmnd/settings/mode";
+
+const char* CONNECTED_TOPIC = "cmnd/connected";
 
 enum Mode {
   MANUAL,
@@ -49,5 +52,6 @@ void publishWaterLevel(void *_pvParameters);
 
 typedef void (*TopicHandler)(int[], int);
 typedef uint16_t Threshold;
+typedef uint16_t Duration;
 
 #endif

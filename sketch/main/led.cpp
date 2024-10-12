@@ -66,6 +66,9 @@ void LED::run(void *_pvParameters) {
 
         brightness -= 255 / 10;
         if (random(2) || brightness <= 0) {
+          analogWrite(_pins.red, 0);
+          analogWrite(_pins.blue, 0);
+          analogWrite(_pins.green, 0);
           brightness = 255;
           starCount -= 1;
         } 
@@ -76,7 +79,7 @@ void LED::run(void *_pvParameters) {
         }
     }
 
-    vTaskDelay(50 / portTICK_PERIOD_MS);  // Delay for 100 ms
+    vTaskDelay(100 / portTICK_PERIOD_MS);  // Delay for 100 ms
   }
 }
 

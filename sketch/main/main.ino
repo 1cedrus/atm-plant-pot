@@ -10,9 +10,12 @@
 #include "setup.h"
 #include "led.h"
 
-LED sun({16, 17, 18});
-LED cloud({35, 36, 37});
+LED sun({5, 6, 7});
+LED cloud_1({15, 16, 17});
+LED cloud_2({35, 36, 37});
+
 Threshold toWater = DEFAULT_THRESHOLD;
+Duration timeToWater = DEFAULT_DURATION;
 
 // Default set as AUTOMATIC
 Mode wateringMode = AUTOMATIC;
@@ -32,6 +35,7 @@ void setup() {
 
   preferences.begin("app", true);
   toWater = preferences.getUShort("threashold", DEFAULT_THRESHOLD);
+  timeToWater = preferences.getUShort("duration", DEFAULT_DURATION);
   preferences.end();
 
   // Just run at AUTOMATIC mode till smt get update by backend
@@ -43,12 +47,13 @@ void setup() {
   client.setCallback(mqttCallback);
   client.subscribe(LED_CUSTOM_TOPIC, 1);
   client.subscribe(WATER_PUMP_TOPIC, 1);
-  client.subscribe(THRESHOLD_TOPIC, 1);
-  client.subscribe(SETTINGS_TOPIC, 1);
+  client.subscribe(MODE_TOPIC, 1);
+  client.subscribe(AUTOMATIC_TOPIC, 1);
+  client.publish(CONNECTED_TOPIC, "HELLOWORLD", 10);
 
   xTaskCreatePinnedToCore(publishSoilMoisture, "PublishSoilMoisture", 2048, NULL, 1, NULL, 0);
   xTaskCreatePinnedToCore(publishWaterLevel, "PublisWaterLevel", 2048, NULL, 1, NULL, 0);
-  xTaskCreatePinnedToCore(messageProcessor, "MessageProcessor", 2048, NULL, 2, NULL, 0);
+  xTaskCreatePinnedToCore(messageProcessor, "MessageProcessor", 4095, NULL, 2, NULL, 0);
   xTaskCreatePinnedToCore(mqttLoopTask, "MqttLoop", 2048, NULL, 1, NULL, 1);
   xTaskCreate(
     [](void* pvParameters) {
@@ -58,7 +63,7 @@ void setup() {
     "LEDSun", 
     2048, 
     &sun,
-    1, 
+    3, 
     &sunLED
   );
   xTaskCreate(
@@ -66,9 +71,20 @@ void setup() {
         LED* led = static_cast<LED*>(pvParameters);
         led->run(pvParameters);
     }, 
-    "LEDCloud", 
+    "LEDCloud_One", 
     2048, 
-    &cloud,
+    &cloud_1,
+    1, 
+    NULL
+  );
+  xTaskCreate(
+    [](void* pvParameters) {
+        LED* led = static_cast<LED*>(pvParameters);
+        led->run(pvParameters);
+    }, 
+    "LEDCloud_Two", 
+    2048, 
+    &cloud_2,
     1, 
     NULL
   );
@@ -89,13 +105,12 @@ void mqttLoopTask(void* param) {
       vTaskResume(autoWaterTask);
 
       preferences.begin("app", true);
-      if (tryConnectToBrokerInFlash()) {
-        client.subscribe(LED_CUSTOM_TOPIC, 1);
-        client.subscribe(WATER_PUMP_TOPIC, 1);
-        client.subscribe(THRESHOLD_TOPIC, 1);
-        client.subscribe(SETTINGS_TOPIC, 1);
-      }
-
+      while (!tryConnectToBrokerInFlash()) {}
+      client.subscribe(LED_CUSTOM_TOPIC, 1);
+      client.subscribe(WATER_PUMP_TOPIC, 1);
+      client.subscribe(MODE_TOPIC, 1);
+      client.subscribe(AUTOMATIC_TOPIC, 1);
+      client.publish(CONNECTED_TOPIC, "HELLOWORLD", 10);
       preferences.end();
     }
 
@@ -136,10 +151,10 @@ void messageProcessor(void* param) {
         handler = ledCustom;
       } else if (!strcmp(msg.topic, WATER_PUMP_TOPIC)) {
         handler = waterPump;
-      } else if (!strcmp(msg.topic, THRESHOLD_TOPIC)) {
-        handler = threshold;
-      } else if (!strcmp(msg.topic, SETTINGS_TOPIC)) {
-        handler = settings;
+      } else if (!strcmp(msg.topic, AUTOMATIC_TOPIC)) {
+        handler = automatic;
+      } else if (!strcmp(msg.topic, MODE_TOPIC)) {
+        handler = mode;
       }
 
       handler(payload, payloadLength);
@@ -157,9 +172,9 @@ void publishSoilMoisture(void *_pvParameters) {
       continue;
     }
 
-    int nSoilMoisture = analogRed(SOIL_MOISTURE_PIN);
+    int nSoilMoisture = analogRead(SOIL_MOISTURE_PIN);
 
-    if (nLastTimeUpdate != nSoilMoisture) {
+    if (abs(nLastTimeUpdate - nSoilMoisture) > 100) {
       itoa(nSoilMoisture, psSoilMoisture, 10);
       client.publish(SOIL_MOISTURE_TOPIC, psSoilMoisture, strlen(psSoilMoisture));
 
@@ -211,7 +226,7 @@ void ledCustom(int payload[], int payloadLength) {
   if (payloadLength != 6) {
     Serial.print("\n[ERROR]: Payload format is not correct!");
   } else {
-    LED* selectedLED = payload[0] == 0 ? &sun : &cloud;
+    LED* selectedLED = payload[0] == 1 ? &sun : (payload[0] == 2 ? &cloud_1 : &cloud_2);
 
     selectedLED->setColor({ payload[1], payload[2], payload[3] });
     selectedLED->setState(static_cast<LEDMode>(payload[5]));
@@ -227,19 +242,21 @@ void waterPump(int payload[], int payloadLength) {
   }
 }
 
-void threshold(int payload[], int payloadLength) {
-  if (payloadLength != 1) {
+void automatic(int payload[], int payloadLength) {
+  if (payloadLength != 2) {
     Serial.print("\n[ERROR]: Payload format is not correct!");
   } else {
     toWater = static_cast<Threshold>(payload[0]);
+    timeToWater = static_cast<Duration>(payload[1]);
 
     preferences.begin("app", false);
-    toWater = preferences.putUShort("threashold", toWater);
+    preferences.putUShort("threashold", toWater);
+    preferences.putUShort("duration", timeToWater);
     preferences.end();
   }
 }
 
-void settings(int payload[], int payloadLength) {
+void mode(int payload[], int payloadLength) {
   if (payloadLength != 1) {
     Serial.print("\n[ERROR]: Payload format is not correct!");
   } else if (wateringMode != payload[0]) {
