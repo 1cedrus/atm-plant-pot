@@ -28,7 +28,7 @@ def get_db_session():
 def get_weather_api_url(location: str | None = None):
     try:
         if location:
-            return f"https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{location}/today?key={APIKEY}&include=current&elements=temp,humidity,conditions,datetime,description,cloudcover,precip,precipprob,solarradiation,icon"
+            return f"https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{location}/today?key={APIKEY}&lang=id&include=current&elements=temp,humidity,conditions,datetime,description,cloudcover,precip,precipprob,solarradiation,icon"
 
         with get_db_session() as db:
             config = db.query(Config).first()
@@ -48,7 +48,6 @@ async def fetch_weather_and_publish(location: str | None = None):
      async with httpx.AsyncClient() as client:
         try:
             response = await client.get(get_weather_api_url(location if location else None))
-            print(response.status_code, location)
             if response.status_code != 200:
                 raise HTTPException(status_code=400, detail="Error fetching weather data")
             data = response.json()
@@ -95,7 +94,8 @@ async def fetch_weather_and_publish(location: str | None = None):
             # Xử lý dữ liệu thời tiết
 
             # Publish dữ liệu lên MQTT topic
-
+            from routers.mqtt_router import real_time_weather
+            await real_time_weather()
             return True
         except Exception as e:
             print(f"Error fetching weather data: {e}")

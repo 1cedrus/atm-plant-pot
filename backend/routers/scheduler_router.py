@@ -23,7 +23,6 @@ router = APIRouter(prefix='/api')
 @router.post('/reminder')
 async def new_scheduler(request: WaterShedule, db: Session = Depends(get_db), config: Config = Depends(pin_authenticate)):
     from crud import create_watering_schedule
-    print("new_scheduler: ", request.time, type(request.time))
     request.time = request.time.astimezone(tz=timezone(timedelta(hours=7))) # convert to UTC+7
     watering_schedule = create_watering_schedule(db, config.plant_id , request)
     add_a_schedule(watering_schedule.id, watering_schedule.time.hour, watering_schedule.time.minute)

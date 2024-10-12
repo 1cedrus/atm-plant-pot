@@ -17,6 +17,7 @@ class Watering(Enum):
 class WateringMode(Enum):
     MANUAL = 'manual'
     AUTOMATIC = 'automatic'
+    REALTIME = 'realtime'
 
 class LedMode(Enum):
     REALTIME = 'realtime'
