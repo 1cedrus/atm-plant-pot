@@ -1,3 +1,5 @@
+from pydoc_data.topics import topics
+
 from fastapi import HTTPException, Request
 
 from fastapi import APIRouter
@@ -8,6 +10,7 @@ from typing_extensions import TypedDict
 from crud import get_moisture_readings, get_watering, get_water_level, get_weather, get_leds
 from database.database import get_db
 from models.models import Config, Watering, Watering_Schedule, Led
+from routers import topic
 from routers.topic import WateringMode
 from schemas.rq_schemas import Position, MoistureReadingScope, UpdateLedMode
 from schemas.schemas import ConfigBase
@@ -67,12 +70,6 @@ async def get_watering_mode(mode: str | None = None, config: Config = Depends(pi
 async def get_led_mode(config: Config = Depends(pin_authenticate)):
     return config.led_mode
 
-@router.post("/led-mode", tags=["led mode"])
-async def update_led_mode(request: UpdateLedMode, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
-    config.led_mode = request.mode
-    db.commit()
-    await manager.broadcast_json({"type": "led_mode"})
-    return {"message": "success change led mode to " + request.mode}
 
 @router.get("/led-settings", tags=["led settings"])
 async def get_led_settings(config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):

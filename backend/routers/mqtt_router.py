@@ -13,7 +13,7 @@ from models.models import Plant, Config, Watering_Schedule, Led, Watering, Weath
 from mqtt import iot
 from schemas.mqtt_rq_schemas import *
 from routers import topic
-from schemas.rq_schemas import UpdateWateringMode
+from schemas.rq_schemas import UpdateWateringMode, UpdateLedMode
 from utils import pin_authenticate
 from ws import manager
 
@@ -40,7 +40,7 @@ def send_data(request: str):
             start_raining()
         if config.led_mode == str(topic.LedMode.REALTIME.value):
             start_led()
-        else:
+        elif config.led_mode == str(topic.LedMode.CUSTOM.value):
             leds = db.query(Led).all()
             if leds:
                 for led in leds:
@@ -150,11 +150,11 @@ def start_led():
             iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value),
                         f"1,{str(r)},{str(g)},{str(b)},{str(brightness)},{str(topic.ALedMode.ON.value)}")
             if any(c in ["type_18", "type_37", "type_38", "type_22", "type_24", "type_25"] for c in conditions):
-                for i in range(2, len(leds) + 1):
+                for i in range(1, len(leds)):
                     iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value), f"{str(leds[i].id)},{str(leds[i].red)},{str(leds[i].green)},{str(leds[i].blue)},{str(leds[i].brightness)},{str(topic.ALedMode.STARLIGHT.value)}")
                     print(f"start led {leds[i].id}")
             else:
-                for i in range(2, len(leds) + 1):
+                for i in range(1, len(leds)):
                     iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value), f"{str(leds[i].id)},{str(leds[i].red)},{str(leds[i].green)},{str(leds[i].blue)},{str(leds[i].brightness)},{str(topic.ALedMode.OFF.value)}")
                     print(f"stop led {leds[i].id}")
 
@@ -195,5 +195,26 @@ async def update_watering_mode(request: UpdateWateringMode, config: Config = Dep
     else:
         message = "2"
     iot.publish(str(topic.Topic.SETTINGS_TOPIC.value), message)
+    if request.mode == topic.WateringMode.REALTIME.value:
+        start_raining()
     await manager.broadcast_json({"type": "watering_mode"})
     return {"message": "success change watering mode to " + str(request.mode)}
+
+
+@router.post("/led-mode", tags=["led mode"])
+async def update_led_mode(request: UpdateLedMode, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
+    config.led_mode = request.mode
+    leds = db.query(Led).all()
+    if leds:
+        if request.mode == topic.LedMode.REALTIME.value:
+            start_led()
+        elif request.mode == topic.LedMode.OFF.value:
+            for led in leds:
+                # led.state = topic.ALedMode.OFF.value
+                iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value), f"{str(led.id)},{str(led.red)},{str(led.green)},{str(led.blue)},{str(led.brightness)},{str(topic.LedMode.OFF.value)}")
+        else:
+            for led in leds:
+                iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value), f"{str(led.id)},{str(led.red)},{str(led.green)},{str(led.blue)},{str(led.brightness)},{str(led.state)}")
+    db.commit()
+    await manager.broadcast_json({"type": "led_mode"})
+    return {"message": "success change led mode to " + request.mode}

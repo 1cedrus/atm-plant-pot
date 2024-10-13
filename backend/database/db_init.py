@@ -37,8 +37,8 @@ def init_db(db: Session):
 
     my_watering = db.query(Watering).first()
     if not my_watering:
-        default_watering = Watering(watering_threshold=200, watering_duration=5, plant_id=db_plant.id)
-        db.add(default_watering)
+        my_watering = Watering(watering_threshold=200, watering_duration=5, plant_id=db_plant.id)
+        db.add(my_watering)
         db.commit()
 
     my_water_level = db.query(WaterLevel).first()
@@ -49,7 +49,7 @@ def init_db(db: Session):
 
     my_schedules = db.query(Watering_Schedule).all()
     if len(my_schedules) < 1:
-        default_watering_schedule = Watering_Schedule(duration=2, watering_id=default_watering.id)
+        default_watering_schedule = Watering_Schedule(duration=2, watering_id=my_watering.id)
         db.add(default_watering_schedule)
         db.commit()
         db.refresh(default_watering_schedule)

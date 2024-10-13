@@ -59,7 +59,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             await manager.broadcast_json(djson)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        await manager.broadcast(f"Client {client_id} left the chat")
+        # await manager.broadcast(f"Client {client_id} left the chat")
 
 
 
