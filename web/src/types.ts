@@ -6,6 +6,7 @@ export interface Props {
 export enum WateringMode {
   Automatic = 'automatic',
   Manual = 'manual',
+  Realtime = 'realtime',
 }
 
 export enum LEDMode {

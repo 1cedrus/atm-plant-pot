@@ -141,11 +141,14 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className='flex-1'>
             {waterLevel ? (
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-2 pt-4 h-full'>
-                <Button variant='outline' className='text-2xl font-bold h-full'>
-                  {waterLevel.water_level === 0 ? '⬇️ 30%' : '⬆️  30%'}
-                </Button>
-                <Button className='h-full font-bold text-2xl' variant='outline' onClick={handleWatering}>
+              <div className='flex flex-col gap-12 pt-4 h-full'>
+                <div className='flex flex-col'>
+                  <div className='font-bold'>
+                    {waterLevel.water_level === 0 ? 'Water tank is above 30%' : 'Water tank is below 30%'}
+                  </div>
+                  <div className='text-xs text-gray-600'>Always get update after 5s</div>
+                </div>
+                <Button className='h-full font-bold text-xl text-white bg-black' variant='outline' onClick={handleWatering}>
                   <span className={isWatering ? 'animate-spin mr-2' : 'mr-2'}>💦</span>
                   {isWatering ? 'Stop' : 'Water'}
                 </Button>

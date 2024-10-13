@@ -5,6 +5,17 @@ import { Separator } from '@/components/ui/separator';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuthority } from '@/providers/AuthenticationProvider';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 enum Spot {
   Dashboard = 'dashboard',
@@ -65,9 +76,12 @@ export default function NavigationBarr() {
                   LED Settings
                 </Button>
               </div>
-              <Button onClick={handleLogout} variant='outline' className='mb-8'>
-                Logout
-              </Button>
+              <div className='flex flex-col gap-2'>
+                <ChangePasswordButton />
+                <Button onClick={handleLogout} variant='outline' className='mb-8'>
+                  Logout
+                </Button>
+              </div>
             </div>
           </SheetContent>
         </Sheet>
@@ -76,5 +90,59 @@ export default function NavigationBarr() {
         {pathname.includes(Spot.LedSettings) && <h1 className='text-2xl font-bold '>💡 LED Settings</h1>}
       </div>
     </div>
+  );
+}
+
+function ChangePasswordButton() {
+  const [currentPin, setCurrentPin] = useState('');
+  const [newPin, setNewPin] = useState('');
+
+  const handleChangePassword = () => {};
+
+  return (
+    <Dialog>
+      <DialogTrigger>
+        <Button onClick={handleChangePassword} variant='outline' className='w-full'>
+          Change password
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Change your password</DialogTitle>
+          <DialogDescription>
+            You can change your password by entering the current password and the new password
+          </DialogDescription>
+          <div>
+            <div className='grid gap-4 py-4'>
+              <div className='grid grid-cols-4 items-center gap-4'>
+                <Label htmlFor='current' className='text-right'>
+                  Current PIN
+                </Label>
+                <Input
+                  id='current'
+                  value={currentPin}
+                  onChange={(e) => setCurrentPin(e.currentTarget.value)}
+                  className='col-span-3'
+                />
+              </div>
+              <div className='grid grid-cols-4 items-center gap-4'>
+                <Label htmlFor='new' className='text-right'>
+                  New PIN
+                </Label>
+                <Input
+                  id='new'
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.currentTarget.value)}
+                  className='col-span-3'
+                />
+              </div>
+            </div>
+          </div>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={handleChangePassword} variant='outline'>Change</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

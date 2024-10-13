@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import useToast from '@/hooks/useToast';
 import { Toaster } from '@/components/ui/toaster.tsx';
 
-export function Outlet() {
+export default function Outlet() {
   const { isAuthenticated } = useAuthority();
   const { pathname } = useLocation();
   const { toast } = useToast();

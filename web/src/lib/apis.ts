@@ -173,7 +173,7 @@ export const getLEDCustomSettings = async (): Promise<LED[]> => {
 export const setLEDMode = async (mode: LEDMode) => {
   return axios({
     method: 'post',
-    url: '/api/led-mode',
+    url: '/api/mqtt/led-mode',
     data: {
       mode,
     },
