@@ -9,7 +9,7 @@ A water level sensor is used to check if the water tank is empty, and the system
 Also, the system can be controlled remotely through web interface or android app.
 
 ### Hardware
-In real project we decided to build a 20x10x10 plant pot, and using a YL-69 sensor, a 5V water pump, a water level sensor, some RGB LEDs and a ESP32S3 board.
+In real project we decided to build a 10x10x10 plant pot, and using a YL-69 sensor, a 5V water pump, a water level sensor, some RGB LEDs and a ESP32S3 board.
 
 - ESP32S3 
 - FC-28 soil moisture sensor
