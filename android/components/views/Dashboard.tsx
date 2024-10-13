@@ -48,7 +48,7 @@ export default function Dashboard() {
   const [isWatering, setIsWatering] = useState<boolean>(false);
   const [date, setDate] = useState<DateRange | undefined>({
     from: dayjs(Date.now()).subtract(30, "day").toDate(), // 30 days ago
-    to: new Date(Date.now())
+    to: new Date(Date.now()),
   });
 
   const { data: soilMoisture } = useQuery({
@@ -92,7 +92,6 @@ export default function Dashboard() {
     setIsWatering((prev) => !prev);
   };
 
-
   const handleChartPress = async () => {
     // Change orientation to landscape
     await ScreenOrientation.lockAsync(
@@ -126,6 +125,10 @@ export default function Dashboard() {
       onClose();
     }
   }, [soilMoistureData, soilMoisture, waterLevel, weather]);
+
+  if (!soilMoistureData || !soilMoisture || !waterLevel || !weather) {
+    return null;
+  }
 
   return (
     <ScrollView style={styles.container}>

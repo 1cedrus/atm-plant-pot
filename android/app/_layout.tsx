@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import axios from "axios";
 import { AppProvider } from "@/providers/AppProvider";
 import { BackdropProvider } from "@/components/Backdrop";
-import { StatusBar } from "expo-status-bar";
 
 axios.defaults.headers["Access-Control-Allow-Origin"] = "*";
 axios.defaults.headers["ngrok-skip-browser-warning"] = "true";
@@ -21,7 +20,6 @@ export default function Root() {
         <AppProvider>
           <BackdropProvider>
             <Slot />
-            <StatusBar style="dark" />
           </BackdropProvider>
         </AppProvider>
       </SessionProvider>

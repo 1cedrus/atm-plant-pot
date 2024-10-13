@@ -208,6 +208,7 @@ export default function LEDController() {
       </View>
       {selectedLED && (
         <ColorController
+          key={selectedLED.id}
           modalVisible={modalVisible}
           setModalVisible={setModalVisible}
           selectedLED={selectedLED}

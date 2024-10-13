@@ -15,8 +15,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "icon": "./assets/icon.png",
-      "package": "com.cedrus.watering"
+      "package": "com.cedrus.watering",
       "permissions": ["android.permission.INTERNET", "android.permission.NEARBY_WIFI_DEVICES"]
     },
     "web": {

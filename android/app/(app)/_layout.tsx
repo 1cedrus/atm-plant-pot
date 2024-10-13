@@ -8,8 +8,6 @@ import {
   DrawerItemList,
 } from "@react-navigation/drawer";
 
-StatusBar.setBarStyle("dark-content");
-
 export default function AppLayout() {
   const { isLoading, session } = useSession();
 
@@ -65,6 +63,7 @@ export default function AppLayout() {
           }}
         />
       </Drawer>
+      <StatusBar barStyle="dark-content" />
     </GestureHandlerRootView>
   );
 }

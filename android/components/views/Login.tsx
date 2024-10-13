@@ -9,6 +9,7 @@ import {
   Pressable,
   Modal,
   TouchableWithoutFeedback,
+  StatusBar,
 } from "react-native";
 import { useSession } from "@/providers/AuthenticationProvider";
 import { router } from "expo-router";
@@ -62,6 +63,7 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <Pressable
         onPress={() => setOpen(true)}
         style={{ position: "absolute", bottom: 0, right: 0, padding: 20 }}
