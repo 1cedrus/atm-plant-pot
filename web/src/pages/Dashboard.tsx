@@ -187,7 +187,7 @@ export default function Dashboard() {
                 The current weather in update using the Visual Crossing Weather API.
               </DialogDescription>
               <div className='flex gap-4 py-4 items-center '>
-                <img src={`src/assets/weather-icon/${weather.icon}.svg`} className='h-20 w-20 text-muted-foreground' />
+                <img src={`https://raw.githubusercontent.com/visualcrossing/WeatherIcons/main/PNG/2nd%20Set%20-%20Color/${weather.icon}.png`} className='h-20 w-20 text-muted-foreground' />
                 <div>
                   <div className='font-bold'>{weather.address}</div>
                   <div className='text-2xl font-bold'>{weather.temp}°F</div>

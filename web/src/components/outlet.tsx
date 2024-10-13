@@ -4,7 +4,7 @@ import { Outlet as OutletBrowser, useLocation, useNavigate } from 'react-router-
 import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppProvider } from '@/providers/AppProvider';
-import { Backdrop, BackdropProvider } from './ui/backdrop';
+import { BackdropProvider } from './ui/backdrop';
 
 export default function Outlet() {
   const { isAuthenticated } = useAuthority();
@@ -14,14 +14,10 @@ export default function Outlet() {
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (pathname === '/') {
+    } else if (pathname === '/') {
       navigate('/dashboard');
     }
-  }, [pathname]);
+  }, [isAuthenticated, pathname]);
 
   return (
     <QueryClientProvider client={new QueryClient()}>
