@@ -2,24 +2,18 @@ import { useAuthority } from '@/providers/AuthenticationProvider';
 import NavigationBarr from '@/components/NavigationBar';
 import { Outlet as OutletBrowser, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import useToast from '@/hooks/useToast';
-import { Toaster } from '@/components/ui/toaster.tsx';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AppProvider } from '@/providers/AppProvider';
+import { Backdrop, BackdropProvider } from './ui/backdrop';
 
 export default function Outlet() {
   const { isAuthenticated } = useAuthority();
   const { pathname } = useLocation();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
-
-      toast({
-        title: 'Unauthorized',
-        description: 'You need to login to access the dashboard',
-        variant: 'destructive',
-      });
     }
   }, [isAuthenticated]);
 
@@ -30,10 +24,15 @@ export default function Outlet() {
   }, [pathname]);
 
   return (
-    <div className='w-full p-8'>
-      <NavigationBarr />
-      <OutletBrowser />
-      <Toaster />
-    </div>
+    <QueryClientProvider client={new QueryClient()}>
+      <AppProvider>
+        <BackdropProvider>
+          <div className='w-full p-8'>
+            <NavigationBarr />
+            <OutletBrowser />
+          </div>
+        </BackdropProvider>
+      </AppProvider>
+    </QueryClientProvider>
   );
 }
