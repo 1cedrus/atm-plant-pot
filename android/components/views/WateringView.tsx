@@ -1,3 +1,4 @@
+import RadioGroup from "react-native-radio-buttons-group";
 import {
   StyleSheet,
   Switch,
@@ -7,7 +8,7 @@ import {
   Pressable,
   TouchableWithoutFeedback,
 } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AutomaticSettings,
   ManualSettings,
@@ -17,7 +18,7 @@ import {
 } from "@/types";
 import Slider from "@react-native-community/slider";
 import { Picker } from "@react-native-picker/picker";
-import { Divider, IconButton } from "react-native-paper";
+import { ActivityIndicator, Divider, IconButton } from "react-native-paper";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -41,24 +42,32 @@ export default function WateringView() {
 
   const queryClient = useQueryClient();
 
-  const wateringModeMutation = useMutation({
-    mutationFn: (selectedMode: WateringMode) => {
-      if (mode === selectedMode) {
-        return setWateringMode(
-          selectedMode === WateringMode.Automatic
-            ? WateringMode.Manual
-            : WateringMode.Automatic
-        );
-      }
+  const radioButtons = useMemo(
+    () => [
+      {
+        id: WateringMode.Realtime,
+        label: "Realtime",
+        value: WateringMode.Realtime,
+      },
+      {
+        id: WateringMode.Manual,
+        label: "Manual",
+        value: WateringMode.Manual,
+      },
+      {
+        id: WateringMode.Automatic,
+        label: "Automatic",
+        value: WateringMode.Automatic,
+      },
+    ],
+    []
+  );
 
-      return setWateringMode(selectedMode);
+  const wateringModeMutation = useMutation({
+    mutationFn: (selectedMode: WateringMode) => setWateringMode(selectedMode),
+    onSuccess: (_, selectedMode) => {
+      queryClient.setQueryData([WebSocketEventType.WateringMode], selectedMode);
     },
-    onSuccess: () =>
-      queryClient.setQueryData([WebSocketEventType.WateringMode], (old) =>
-        old === WateringMode.Automatic
-          ? WateringMode.Manual
-          : WateringMode.Automatic
-      ),
   });
 
   const updateSettingsMutation = useMutation({
@@ -132,102 +141,102 @@ export default function WateringView() {
     <View style={[styles.container]}>
       <View style={{ gap: 20 }}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>Automatically water the plants</Text>
-          <Switch
-            value={mode === WateringMode.Automatic}
-            onChange={() => wateringModeMutation.mutate(WateringMode.Automatic)}
-            trackColor={{ false: "#767577", true: "#000" }}
-            thumbColor="#f4f3f4"
-          />
-        </View>
-        <View>
-          <Text>
-            Pick threshold if the soil moisture is below the pot will water the
-            plants
-          </Text>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              paddingTop: 10,
-            }}
-          >
-            <Slider
-              style={{ flex: 1 }}
-              value={Math.trunc((_threshold / 4095) * 100)}
-              onValueChange={(value) =>
-                setThreshold(Math.trunc((value / 100) * 4095))
-              }
-              minimumValue={0}
-              maximumValue={100}
-              step={5}
-              minimumTrackTintColor="#000000"
-              maximumTrackTintColor="#767577"
-              disabled={mode !== WateringMode.Automatic}
-            />
-            <Text>{Math.trunc((_threshold / 4095) * 100)}%</Text>
-          </View>
-        </View>
-        <View>
-          <Text>Choose water duration</Text>
-          <Picker
-            selectedValue={duration}
-            enabled={mode === WateringMode.Automatic}
-            onValueChange={(value) =>
-              updateSettingsMutation.mutate({
-                ...automationSettings,
-                duration: value,
-              })
+          <Text style={styles.cardTitle}>Watering Mode</Text>
+          <RadioGroup
+            radioButtons={radioButtons}
+            onPress={(value) =>
+              wateringModeMutation.mutate(value as WateringMode)
             }
-          >
-            <Picker.Item label="5s" value={5} />
-            <Picker.Item label="10s" value={10} />
-            <Picker.Item label="20s" value={15} />
-            <Picker.Item label="25s" value={25} />
-            <Picker.Item label="30s" value={30} />
-            <Picker.Item label="60s" value={60} />
-          </Picker>
-        </View>
-      </View>
-      <Divider bold={true} />
-      <View style={{ gap: 10 }}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>Manually water the plants</Text>
-          <Switch
-            value={mode === WateringMode.Manual}
-            onChange={() => wateringModeMutation.mutate(WateringMode.Manual)}
-            trackColor={{ false: "#767577", true: "#000" }}
-            thumbColor="#f4f3f4"
+            selectedId={mode}
           />
         </View>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Text>Add new reminder</Text>
-          <AddReminderModal
-            modalVisible={modalVisible}
-            setModalVisible={setModalVisible}
-          />
-          <IconButton
-            icon="plus"
-            onPress={() => setModalVisible(true)}
-            iconColor="#000"
-            disabled={mode !== WateringMode.Manual}
-          />
-        </View>
-        <View>
-          {reminders.map((reminder, index) => (
-            <ReminderCard
-              key={index}
-              reminder={reminder}
-              isDisabled={mode !== WateringMode.Manual}
-            />
-          ))}
-        </View>
+        <Divider bold={true} />
+        {mode === WateringMode.Automatic && (
+          <>
+            <Text style={styles.cardTitle}>Automatically water the plants</Text>
+            <View>
+              <Text>
+                Pick threshold if the soil moisture is below the pot will water
+                the plants
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingTop: 10,
+                }}
+              >
+                <Slider
+                  style={{ flex: 1 }}
+                  value={Math.trunc((_threshold / 4095) * 100)}
+                  onValueChange={(value) =>
+                    setThreshold(Math.trunc((value / 100) * 4095))
+                  }
+                  minimumValue={0}
+                  maximumValue={100}
+                  step={5}
+                  minimumTrackTintColor="#000000"
+                  maximumTrackTintColor="#767577"
+                  disabled={mode !== WateringMode.Automatic}
+                />
+                <Text>{Math.trunc((_threshold / 4095) * 100)}%</Text>
+              </View>
+            </View>
+            <View>
+              <Text>Choose water duration</Text>
+              <Picker
+                selectedValue={duration}
+                enabled={mode === WateringMode.Automatic}
+                onValueChange={(value) =>
+                  updateSettingsMutation.mutate({
+                    ...automationSettings,
+                    duration: value,
+                  })
+                }
+              >
+                <Picker.Item label="5s" value={5} />
+                <Picker.Item label="10s" value={10} />
+                <Picker.Item label="20s" value={15} />
+                <Picker.Item label="25s" value={25} />
+                <Picker.Item label="30s" value={30} />
+                <Picker.Item label="60s" value={60} />
+              </Picker>
+            </View>
+          </>
+        )}
+        {mode === WateringMode.Manual && (
+          <>
+            <Text style={styles.cardTitle}>Manually water the plants</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text>Add new reminder</Text>
+              <AddReminderModal
+                modalVisible={modalVisible}
+                setModalVisible={setModalVisible}
+              />
+              <IconButton
+                icon="plus"
+                onPress={() => setModalVisible(true)}
+                iconColor="#000"
+                disabled={mode !== WateringMode.Manual}
+              />
+            </View>
+            <View>
+              {reminders.map((reminder) => (
+                <ReminderCard
+                  key={reminder.id}
+                  reminder={reminder}
+                  isDisabled={mode !== WateringMode.Manual}
+                />
+              ))}
+            </View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -422,6 +431,7 @@ function ReminderCard({ reminder, isDisabled }: ReminderCardProps) {
         <Text style={{ fontSize: 16, fontWeight: 800, color: "white" }}>
           Delete 🗑️
         </Text>
+        <ActivityIndicator color="white" />
       </View>
     );
   };

@@ -3,7 +3,6 @@ import { SessionProvider } from "@/providers/AuthenticationProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import axios from "axios";
 import { AppProvider } from "@/providers/AppProvider";
-import { BackdropProvider } from "@/components/Backdrop";
 
 axios.defaults.headers["Access-Control-Allow-Origin"] = "*";
 axios.defaults.headers["ngrok-skip-browser-warning"] = "true";
@@ -18,9 +17,7 @@ export default function Root() {
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         <AppProvider>
-          <BackdropProvider>
-            <Slot />
-          </BackdropProvider>
+          <Slot />
         </AppProvider>
       </SessionProvider>
     </QueryClientProvider>

@@ -21,17 +21,9 @@ export default function WateringModeCard() {
   const queryClient = useQueryClient();
 
   const wateringModeMutation = useMutation({
-    mutationFn: (selectedMode: WateringMode) => {
-      if (mode === selectedMode) {
-        return setWateringMode(selectedMode === WateringMode.Automatic ? WateringMode.Manual : WateringMode.Automatic);
-      }
-
-      return setWateringMode(selectedMode);
-    },
-    onSuccess: () =>
-      queryClient.setQueryData([WebSocketEventType.WateringMode], (old) =>
-        old === WateringMode.Automatic ? WateringMode.Manual : WateringMode.Automatic,
-      ),
+    mutationFn: (selectedMode: WateringMode) => setWateringMode(selectedMode),
+    onSuccess: (_, selectedMode) =>
+      queryClient.setQueryData([WebSocketEventType.WateringMode], selectedMode as WateringMode),
   });
 
   const updateSettingsMutation = useMutation({
@@ -163,11 +155,7 @@ export default function WateringModeCard() {
                 ) : (
                   <div className='flex flex-col gap-2'>
                     {reminders.map((reminder) => (
-                      <ReminderCard
-                        key={reminder.id}
-                        reminder={reminder}
-                        isDisabled={mode !== WateringMode.Manual}
-                      />
+                      <ReminderCard key={reminder.id} reminder={reminder} isDisabled={mode !== WateringMode.Manual} />
                     ))}
                   </div>
                 )

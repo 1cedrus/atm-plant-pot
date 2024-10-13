@@ -168,7 +168,7 @@ export default function Dashboard() {
             <Card>
               <CardHeader className='flex flex-row justify-between space-y-0 pb-2'>
                 <CardTitle className='text-sm font-medium'>Current Weather</CardTitle>
-                <img src={`src/assets/weather-icon/${weather?.icon}.svg`} className='h-10 w-10 text-muted-foreground' />
+                <img src={`https://raw.githubusercontent.com/visualcrossing/WeatherIcons/main/PNG/2nd%20Set%20-%20Color/${weather.icon}.png`} className='h-10 w-10 text-muted-foreground' />
               </CardHeader>
               <CardContent className='text-left'>
                 <div>
