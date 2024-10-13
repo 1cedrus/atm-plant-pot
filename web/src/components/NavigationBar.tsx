@@ -16,6 +16,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useMutation } from '@tanstack/react-query';
+import { changePin, login } from '@/lib/apis';
+import { toast } from '@/hooks/useToast';
 
 enum Spot {
   Dashboard = 'dashboard',
@@ -96,6 +99,20 @@ export default function NavigationBarr() {
 function ChangePasswordButton() {
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
+  const { setAuthToken } = useAuthority();
+
+  const updatePinMutation = useMutation({
+    mutationFn: ({ oldPin, newPin }: { oldPin: string; newPin: string }) => changePin(oldPin, newPin),
+    onSuccess: async (data) => {
+      console.log(data);
+      toast({ title: 'Success', description: 'PIN changed successfully', duration: 3000 });
+      const { access_token } = await login(newPin);
+      setAuthToken(access_token);
+    },
+    onError: (error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
 
   const handleChangePassword = () => {};
 
@@ -108,10 +125,8 @@ function ChangePasswordButton() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Change your password</DialogTitle>
-          <DialogDescription>
-            You can change your password by entering the current password and the new password
-          </DialogDescription>
+          <DialogTitle>Change your PIN</DialogTitle>
+          <DialogDescription>Pin can only be numeric and length is four</DialogDescription>
           <div>
             <div className='grid gap-4 py-4'>
               <div className='grid grid-cols-4 items-center gap-4'>
@@ -123,6 +138,10 @@ function ChangePasswordButton() {
                   value={currentPin}
                   onChange={(e) => setCurrentPin(e.currentTarget.value)}
                   className='col-span-3'
+                  type='password'
+                  inputMode='numeric'
+                  pattern='[0-9]*'
+                  maxLength={4}
                 />
               </div>
               <div className='grid grid-cols-4 items-center gap-4'>
@@ -130,17 +149,27 @@ function ChangePasswordButton() {
                   New PIN
                 </Label>
                 <Input
+                  inputMode='numeric'
+                  pattern='[0-9]*'
+                  maxLength={4}
                   id='new'
                   value={newPin}
                   onChange={(e) => setNewPin(e.currentTarget.value)}
                   className='col-span-3'
+                  type='password'
                 />
               </div>
             </div>
           </div>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={handleChangePassword} variant='outline'>Change</Button>
+          <Button
+            className='w-32'
+            disabled={newPin.length !== 4 || currentPin.length !== 4}
+            onClick={() => updatePinMutation.mutate({ oldPin: currentPin, newPin })}
+            variant='outline'>
+            {updatePinMutation.isPending ? 'Changing...' : 'Change'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

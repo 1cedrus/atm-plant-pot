@@ -2,7 +2,9 @@ import { useAuthority } from '@/providers/AuthenticationProvider';
 import NavigationBarr from '@/components/NavigationBar';
 import { Outlet as OutletBrowser, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Toaster } from '@/components/ui/toaster.tsx';
+import { AppProvider } from '@/providers/AppProvider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BackdropProvider } from '@/components/ui/backdrop';
 
 export default function Outlet() {
   const { isAuthenticated } = useAuthority();
@@ -22,10 +24,15 @@ export default function Outlet() {
   }, [pathname]);
 
   return (
-    <div className='w-full p-8'>
-      <NavigationBarr />
-      <OutletBrowser />
-      <Toaster />
-    </div>
+    <QueryClientProvider client={new QueryClient()}>
+      <AppProvider>
+        <BackdropProvider>
+          <div className='w-full p-8'>
+            <NavigationBarr />
+            <OutletBrowser />
+          </div>
+        </BackdropProvider>
+      </AppProvider>
+    </QueryClientProvider>
   );
 }

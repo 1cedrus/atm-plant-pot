@@ -12,6 +12,7 @@ import ReminderCard from '@/components/ReminderCard';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getWateringMode, getWateringModeSettings, setWateringMode, updateWateringModeSettings } from '@/lib/apis';
 import { useBackdrop } from '@/components/ui/backdrop';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function WateringModeCard() {
   const { onClose, onOpen } = useBackdrop();
@@ -77,21 +78,30 @@ export default function WateringModeCard() {
   const reminders = (manualSettings as ManualSettings)?.reminders.sort((a, b) => a.id! - b.id!);
 
   return (
-    <Card className='flex flex-col'>
-      <CardHeader>
+    <Card
+      className={`flex flex-col ${updateSettingsMutation.isPending || wateringModeMutation.isPending ? 'blur pointer-events-none' : ''}`}>
+      <CardHeader className='flex flex-row justify-between items-center'>
         <CardDescription>Customize how you want your pot get water.</CardDescription>
       </CardHeader>
       <CardContent className='flex-1'>
         <div className='flex flex-col gap-4'>
           <div className='flex flex-col gap-4'>
-            <div className='flex items-center gap-4'>
-              <Switch
-                id='automatic-mode'
-                checked={mode === WateringMode.Automatic}
-                onCheckedChange={() => wateringModeMutation.mutate(WateringMode.Automatic)}
-              />
-              <Label htmlFor='automatic-mode'>{'Automatically water the plants'}</Label>
-            </div>
+            <RadioGroup value={mode} onValueChange={(value) => wateringModeMutation.mutate(value as WateringMode)}>
+              <div className='flex items-center space-x-2'>
+                <RadioGroupItem value={WateringMode.Realtime} id={WateringMode.Realtime} />
+                <Label htmlFor={WateringMode.Realtime}>Realtime</Label>
+              </div>
+              <div className='flex items-center space-x-2'>
+                <RadioGroupItem value={WateringMode.Automatic} id={WateringMode.Automatic} />
+                <Label htmlFor={WateringMode.Automatic}>Automatic</Label>
+              </div>
+              <div className='flex items-center space-x-2'>
+                <RadioGroupItem value={WateringMode.Manual} id={WateringMode.Manual} />
+                <Label htmlFor={WateringMode.Manual}>Manual</Label>
+              </div>
+            </RadioGroup>
+            <Separator />
+            <Label className='font-bold'>Automatic Settings</Label>
             <div className='space-y-2'>
               <Label htmlFor='threshold'>Moisture Threshold (%)</Label>
               <div className='flex gap-2'>
@@ -103,7 +113,7 @@ export default function WateringModeCard() {
                   className='w-[180px]'
                   value={threshold}
                   onChange={(e) => setThreshold(Number(e.target.value))}
-                  disabled={mode === WateringMode.Manual}
+                  disabled={mode !== WateringMode.Automatic}
                 />
                 {mode === WateringMode.Automatic && threshold !== automationSettings?.threshold && (
                   <>
@@ -119,7 +129,7 @@ export default function WateringModeCard() {
             <div className='space-y-2'>
               <Label>Choose water duration</Label>
               <Select
-                disabled={mode === WateringMode.Manual}
+                disabled={mode !== WateringMode.Automatic}
                 value={duration?.toString()}
                 onValueChange={(value) => updateSettingsMutation.mutate({ threshold, duration: Number(value) })}>
                 <SelectTrigger className='w-[180px]'>
@@ -140,18 +150,11 @@ export default function WateringModeCard() {
             </div>
           </div>
           <Separator />
-          <div className='flex items-center gap-4'>
-            <Switch
-              id='manual-mode'
-              checked={mode === WateringMode.Manual}
-              onCheckedChange={() => wateringModeMutation.mutate(WateringMode.Manual)}
-            />
-            <Label htmlFor='manual-mode'>{'Manually water the plants'}</Label>
-          </div>
+          <Label className='font-bold'>Manual Settings</Label>
           <div className='flex flex-col gap-4'>
             <div className='text-sm flex items-center font-medium w-full justify-between'>
               Reminders
-              <AddNewReminder isDisabled={mode === WateringMode.Automatic} />
+              <AddNewReminder isDisabled={mode !== WateringMode.Manual} />
             </div>
             <div>
               {reminders ? (
@@ -163,7 +166,7 @@ export default function WateringModeCard() {
                       <ReminderCard
                         key={reminder.id}
                         reminder={reminder}
-                        isDisabled={mode === WateringMode.Automatic}
+                        isDisabled={mode !== WateringMode.Manual}
                       />
                     ))}
                   </div>

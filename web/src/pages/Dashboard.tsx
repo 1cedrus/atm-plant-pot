@@ -68,7 +68,7 @@ export default function Dashboard() {
 
       return data.map(({ timestamp, moisture_level }) => ({
         timestamp: format(new Date(timestamp), 'MM/dd/yyyy HH:mm'),
-        moisture_level: ((moisture_level / 4095) * 100).toFixed(2),
+        moisture_level: (100 - (moisture_level / 4095) * 100).toFixed(2),
       }));
     },
   });
@@ -112,6 +112,10 @@ export default function Dashboard() {
     };
   }, [soilMoisture, waterLevel, weather, soilMoistureData]);
 
+  if (!soilMoisture || !waterLevel || !weather || !soilMoistureData) {
+    return null;
+  }
+
   return (
     <>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6'>
@@ -124,10 +128,12 @@ export default function Dashboard() {
             {soilMoisture ? (
               <>
                 <div className='flex gap-2 items-baseline'>
-                  <div className='text-2xl font-bold'>{((soilMoisture.moisture_level / 4095) * 100).toFixed(2)}%</div>
+                  <div className='text-2xl font-bold'>
+                    {(100 - (soilMoisture.moisture_level / 4095) * 100).toFixed(2)}%
+                  </div>
                   <div className='text-xs text-gray-600'>{timeAgo(soilMoisture.timestamp)}</div>
                 </div>
-                <Progress value={(soilMoisture.moisture_level / 4095) * 100} className='mt-2' />
+                <Progress value={100 - (soilMoisture.moisture_level / 4095) * 100} className='mt-2' />
               </>
             ) : (
               <div>Loading...</div>
@@ -140,22 +146,21 @@ export default function Dashboard() {
             <Waves className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent className='flex-1'>
-            {waterLevel ? (
-              <div className='flex flex-col gap-12 pt-4 h-full'>
-                <div className='flex flex-col'>
-                  <div className='font-bold'>
-                    {waterLevel.water_level === 0 ? 'Water tank is above 30%' : 'Water tank is below 30%'}
-                  </div>
-                  <div className='text-xs text-gray-600'>Always get update after 5s</div>
+            <div className='flex flex-col gap-4 pt-4 h-full'>
+              <div className='flex flex-col'>
+                <div className='font-bold'>
+                  {waterLevel.water_level === 0 ? 'Water tank is above 30%' : 'Water tank is below 30%'}
                 </div>
-                <Button className='h-full font-bold text-xl text-white bg-black' variant='outline' onClick={handleWatering}>
-                  <span className={isWatering ? 'animate-spin mr-2' : 'mr-2'}>💦</span>
-                  {isWatering ? 'Stop' : 'Water'}
-                </Button>
+                <div className='text-xs text-gray-600'>Always get update after 5s</div>
               </div>
-            ) : (
-              <div>Loading...</div>
-            )}
+              <Button
+                className='h-full font-bold text-xl text-white bg-black'
+                variant='outline'
+                onClick={handleWatering}>
+                <span className={isWatering ? 'animate-spin mr-2' : 'mr-2'}>💦</span>
+                {isWatering ? 'Stop' : 'Water'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
         <Dialog>
@@ -166,16 +171,12 @@ export default function Dashboard() {
                 <img src={`src/assets/weather-icon/${weather?.icon}.svg`} className='h-10 w-10 text-muted-foreground' />
               </CardHeader>
               <CardContent className='text-left'>
-                {weather ? (
-                  <div>
-                    <div className='font-bold'>{weather?.address}</div>
-                    <div className='text-2xl font-bold'>{weather.temp}°F</div>
-                    <div className='text-muted-foreground'>Humidity: {weather.humidity}%</div>
-                    <div className='text-muted-foreground'>{weather.description}</div>
-                  </div>
-                ) : (
-                  <div>Loading weather data...</div>
-                )}
+                <div>
+                  <div className='font-bold'>{weather?.address}</div>
+                  <div className='text-2xl font-bold'>{((5 / 9) * (weather.temp - 32)).toFixed(2)}°C</div>
+                  <div className='text-muted-foreground'>Humidity: {weather.humidity}%</div>
+                  <div className='text-muted-foreground'>{weather.description}</div>
+                </div>
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -186,12 +187,12 @@ export default function Dashboard() {
                 The current weather in update using the Visual Crossing Weather API.
               </DialogDescription>
               <div className='flex gap-4 py-4 items-center '>
-                <img src={`src/assets/weather-icon/${weather?.icon}.svg`} className='h-20 w-20 text-muted-foreground' />
+                <img src={`src/assets/weather-icon/${weather.icon}.svg`} className='h-20 w-20 text-muted-foreground' />
                 <div>
-                  <div className='font-bold'>{weather?.address}</div>
-                  <div className='text-2xl font-bold'>{weather?.temp}°F</div>
-                  <div className='text-muted-foreground'>Humidity: {weather?.humidity}%</div>
-                  <div className='text-muted-foreground'>{weather?.description}</div>
+                  <div className='font-bold'>{weather.address}</div>
+                  <div className='text-2xl font-bold'>{weather.temp}°F</div>
+                  <div className='text-muted-foreground'>Humidity: {weather.humidity}%</div>
+                  <div className='text-muted-foreground'>{weather.description}</div>
                 </div>
               </div>
             </DialogHeader>

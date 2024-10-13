@@ -56,7 +56,7 @@ export const stopWater = async () => {
   });
 };
 
-export const changePassword = async (oldPin: string, newPin: string) => {
+export const changePin = async (oldPin: string, newPin: string) => {
   return axios({
     method: 'post',
     url: '/api/change-password',

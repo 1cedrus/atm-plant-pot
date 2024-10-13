@@ -7,6 +7,7 @@ import { useAuthority } from '@/providers/AuthenticationProvider';
 import { useNavigate } from 'react-router-dom';
 import { login } from '@/lib/apis';
 import useToast from '@/hooks/useToast';
+import { ServerConfiguration } from '@/components/CommandBox';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -43,7 +44,8 @@ export default function Login() {
   };
 
   return (
-    <div className={`flex items-center justify-center`}>
+    <div className={`flex items-center justify-center h-screen`}>
+      <ServerConfiguration />
       <Card className={`w-[300px]`}>
         <CardHeader className='text-center'>
           <div className={`mb-8 rounded-full flex items-center justify-center`}>
