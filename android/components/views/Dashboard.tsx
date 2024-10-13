@@ -162,6 +162,26 @@ export default function Dashboard() {
             </>
           )}
         </View>
+        <Pressable
+          style={{
+            ...styles.button,
+            backgroundColor: "black",
+            marginBottom: 15,
+          }}
+          onPress={handleWatering}
+        >
+          <Text
+            style={{
+              color: "white",
+              fontWeight: 800,
+              fontSize: 16,
+              paddingHorizontal: 20,
+              textAlign: "center",
+            }}
+          >
+            {!isWatering ? "Water 💦" : "Stop 🛑"}
+          </Text>
+        </Pressable>
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Water Level</Text>
@@ -188,26 +208,6 @@ export default function Dashboard() {
                   Always get update after 5s
                 </Text>
               </View>
-              <Pressable
-                style={{
-                  ...styles.button,
-                  backgroundColor: "black",
-                }}
-                onPress={handleWatering}
-              >
-                <Text
-                  style={{
-                    color: "white",
-                    fontWeight: 800,
-                    fontSize: 16,
-                    paddingHorizontal: 20,
-                    width: 100,
-                    textAlign: "center",
-                  }}
-                >
-                  {!isWatering ? "Water 💦" : "Stop 🛑"}
-                </Text>
-              </Pressable>
             </View>
           )}
         </View>
