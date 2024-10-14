@@ -26,7 +26,7 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-        await self.A(get_lastest_data(), websocket)
+        await self.send_personal_json_message(get_lastest_data(), websocket)
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
