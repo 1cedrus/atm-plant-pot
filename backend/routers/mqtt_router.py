@@ -5,9 +5,11 @@ import asyncio
 
 from sqlalchemy.testing.plugin.plugin_base import config
 
+from exponent_server import simple_send_push_message
 from routers.routers import weather
 from utils import get_event_loop
-from crud import create_moisture_reading, create_water_level, get_watering, set_led, create_watering_schedule
+from crud import create_moisture_reading, create_water_level, get_watering, set_led, create_watering_schedule, \
+    get_all_token
 from database.database import get_db, get_db_other
 from models.models import Plant, Config, Watering_Schedule, Led, Watering, Weather
 from mqtt import iot
@@ -70,6 +72,10 @@ def water_level_data(request: str):
         else:
             raise HTTPException(status_code=404, detail="Plant not found")
         get_event_loop().run_until_complete(manager.broadcast_json({"type": "water_level" }))
+        if request == "1":
+            all_token = get_all_token(db)
+            for token in all_token:
+                simple_send_push_message(token=str(token.token), title="Water tank is below 30%", message="Please refill")
         print(f"Water level data : {request}")
 
 

@@ -21,3 +21,6 @@ class UpdateLedMode(BaseModel):
 #     time: datetime
 #     duration: int
 #     state: bool
+
+class ExpoToken(BaseModel):
+    token: str

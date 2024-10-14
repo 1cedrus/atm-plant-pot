@@ -7,12 +7,12 @@ from fastapi.params import Depends, Query
 from sqlalchemy.orm import Session
 from typing_extensions import TypedDict
 
-from crud import get_moisture_readings, get_watering, get_water_level, get_weather, get_leds
+from crud import get_moisture_readings, get_watering, get_water_level, get_weather, get_leds, create_expo_token
 from database.database import get_db
 from models.models import Config, Watering, Watering_Schedule, Led
 from routers import topic
 from routers.topic import WateringMode
-from schemas.rq_schemas import Position, MoistureReadingScope, UpdateLedMode
+from schemas.rq_schemas import Position, MoistureReadingScope, UpdateLedMode, ExpoToken
 from schemas.schemas import ConfigBase
 from utils import pin_authenticate
 from schemas import schemas
@@ -91,4 +91,10 @@ async def weather(config: Config = Depends(pin_authenticate), db: Session = Depe
     if not weather:
         raise HTTPException(status_code=404, detail="Weather not found")
     return weather.to_dict()
+
+
+@router.post("/expo-push-token", tags=["expo token"])
+def save_token(token: ExpoToken, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
+    my_token = create_expo_token(db, token.token)
+    return {"message": "Save token successfully"}
 
