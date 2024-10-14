@@ -23,15 +23,19 @@ from requests.exceptions import ConnectionError, HTTPError
 def simple_send_push_message(token: str, title, message, extra=None):
     try:
         # my_token = token.split('[')[1].split(']')[0]
-        response = PushClient().publish(PushMessage(to=token, title=title, body=message, data=extra))
-        PushMessage(to=token, title=title, body=message, data=extra)
+        response = PushClient(force_fcm_v1=True).publish(PushMessage(to=token, title=title, body=message, data=extra))
+        # PushMessage(to=token, title=title, body=message, data=extra)
         response.validate_response()
         return "Notification sent successfully!"
 
-    except (PushServerError, HTTPError, ConnectionError) as err:
+    except (PushServerError, HTTPError, ConnectionError, PushTicketError, DeviceNotRegisteredError) as err:
         # Xử lý lỗi PushServerError
         print(f"Failed to send notification: {err}")
         return f"Error: {err}"
+
+    except Exception as e:
+        print(f"Failed to send notification: {e}")
+        return f"Error: {e}"
 
 
 # Basic arguments. You should extend this function with the push features you
