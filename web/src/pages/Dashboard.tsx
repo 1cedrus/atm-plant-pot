@@ -65,7 +65,7 @@ export default function Dashboard() {
       if (date?.from === undefined || date?.to === undefined) return [];
       const data = await getSoilMoistureData(date!.from!.getTime(), addDays(date!.to!, 1).getTime());
 
-      return data.slice(0, 50).map(({ timestamp, moisture_level }) => ({
+      return data.slice(-50, -1).map(({ timestamp, moisture_level }) => ({
         timestamp: format(new Date(timestamp), 'MM/dd/yyyy HH:mm'),
         moisture_level: Math.min((moisture_level - 4095) / -10, 100).toFixed(2),
       }));
