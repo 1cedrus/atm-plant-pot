@@ -73,8 +73,8 @@ export default function WateringView() {
   const updateSettingsMutation = useMutation({
     mutationFn: (settings: AutomaticSettings) =>
       updateWateringModeSettings(settings),
-    onSuccess: (_, settings) => {
-      queryClient.setQueryData([WateringMode.Automatic], settings);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [WateringMode.Automatic] });
     },
   });
 
@@ -95,7 +95,8 @@ export default function WateringView() {
         WateringMode.Automatic
       )) as AutomaticSettings;
 
-      setThreshold(res.threshold || 0);
+      res.threshold = Math.trunc((res.threshold! - 4095) / -10);
+      setThreshold(res.threshold);
 
       return res;
     },
@@ -108,7 +109,7 @@ export default function WateringView() {
       () =>
         updateSettingsMutation.mutate({
           ...(automationSettings as AutomaticSettings),
-          threshold: _threshold,
+          threshold: Math.trunc(4095 - _threshold * 10),
         }),
       500
     );
@@ -168,10 +169,8 @@ export default function WateringView() {
               >
                 <Slider
                   style={{ flex: 1 }}
-                  value={Math.trunc((_threshold / 4095) * 100)}
-                  onValueChange={(value) =>
-                    setThreshold(Math.trunc((value / 100) * 4095))
-                  }
+                  value={_threshold}
+                  onValueChange={(value) => setThreshold(value)}
                   minimumValue={0}
                   maximumValue={100}
                   step={5}
@@ -179,7 +178,7 @@ export default function WateringView() {
                   maximumTrackTintColor="#767577"
                   disabled={mode !== WateringMode.Automatic}
                 />
-                <Text>{Math.trunc((_threshold / 4095) * 100)}%</Text>
+                <Text>{_threshold}%</Text>
               </View>
             </View>
             <View>
@@ -189,7 +188,7 @@ export default function WateringView() {
                 enabled={mode === WateringMode.Automatic}
                 onValueChange={(value) =>
                   updateSettingsMutation.mutate({
-                    ...automationSettings,
+                    threshold: Math.trunc(4095 - _threshold * 10),
                     duration: value,
                   })
                 }

@@ -73,9 +73,12 @@ export default function Dashboard() {
         dayjs(date!.to!).add(1, "day").toDate().getTime()
       );
 
-      return data.slice(0, 10).map(({ timestamp, moisture_level }) => ({
+      return data.slice(-12, -1).map(({ timestamp, moisture_level }) => ({
         timestamp: dayjs(new Date(timestamp)).format("HH:mm").toString(),
-        moisture_level: ((moisture_level / 4095) * 100).toPrecision(2),
+        moisture_level: Math.min(
+          (moisture_level - 4095) / -10,
+          100
+        ).toPrecision(2),
       }));
     },
   });
@@ -146,9 +149,10 @@ export default function Dashboard() {
                 }}
               >
                 <Text style={styles.dataText}>
-                  {(100 - (soilMoisture.moisture_level / 4095) * 100).toFixed(
-                    2
-                  )}
+                  {Math.min(
+                    (soilMoisture.moisture_level - 4095) / -10,
+                    100
+                  ).toFixed(2)}
                   %
                 </Text>
                 <Text style={{ color: "gray" }}>
@@ -156,7 +160,10 @@ export default function Dashboard() {
                 </Text>
               </View>
               <ProgressBar
-                progress={((4095 - soilMoisture.moisture_level) / 4095)}
+                progress={
+                  Math.min((soilMoisture.moisture_level - 4095) / -10, 100) /
+                  100
+                }
                 color={"#000"}
                 style={styles.progressBar}
               />
@@ -229,7 +236,9 @@ export default function Dashboard() {
               <Text style={{ fontWeight: "700", fontSize: 16 }}>
                 {weather?.address}
               </Text>
-              <Text>Temperature: {weather.temp}°F</Text>
+              <Text>
+                Temperature: {((5 / 9) * (weather.temp - 32)).toFixed(2)}°C
+              </Text>
               <Text>Humidity: {weather.humidity}%</Text>
               <Text>{weather.description}</Text>
             </View>
@@ -244,7 +253,7 @@ export default function Dashboard() {
             </View>
             <View>
               {soilMoistureData &&
-                (soilMoistureData.length > 10 ? (
+                (soilMoistureData.length >= 10 ? (
                   <LineChart
                     data={{
                       labels: soilMoistureData
@@ -301,7 +310,7 @@ export default function Dashboard() {
             <Text style={styles.modalTitle}>
               Soil Moisture Statistics (Full Screen)
             </Text>
-            {soilMoistureData && soilMoistureData.length > 10 && (
+            {soilMoistureData && soilMoistureData.length >= 10 && (
               <>
                 <LineChart
                   data={{
