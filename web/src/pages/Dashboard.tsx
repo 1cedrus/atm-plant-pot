@@ -31,15 +31,14 @@ import { DateRange } from 'react-day-picker';
 import { WebSocketEventType } from '@/types';
 import { useBackdrop } from '@/components/ui/backdrop';
 import { Input } from '@/components/ui/input';
-import useToast from '@/hooks/useToast';
 import { ReloadIcon } from '@radix-ui/react-icons';
+import { toast } from '@/hooks/useToast.ts';
 
 export default function Dashboard() {
   const { onOpen, onClose } = useBackdrop();
   const [tryPosition, setTryPosition] = useState<string>('');
   const [onChecking, setOnChecking] = useState<boolean>(false);
   const [isWatering, setIsWatering] = useState<boolean>(false);
-  const { toast } = useToast();
   const [date, setDate] = useState<DateRange | undefined>({
     from: subDays(new Date(Date.now()), 30),
     to: new Date(Date.now()),
@@ -66,9 +65,9 @@ export default function Dashboard() {
       if (date?.from === undefined || date?.to === undefined) return [];
       const data = await getSoilMoistureData(date!.from!.getTime(), addDays(date!.to!, 1).getTime());
 
-      return data.map(({ timestamp, moisture_level }) => ({
+      return data.slice(0, 50).map(({ timestamp, moisture_level }) => ({
         timestamp: format(new Date(timestamp), 'MM/dd/yyyy HH:mm'),
-        moisture_level: (100 - (moisture_level / 4095) * 100).toFixed(2),
+        moisture_level: Math.min((moisture_level - 4095) / -10, 100).toFixed(2),
       }));
     },
   });
@@ -129,11 +128,11 @@ export default function Dashboard() {
               <>
                 <div className='flex gap-2 items-baseline'>
                   <div className='text-2xl font-bold'>
-                    {(100 - (soilMoisture.moisture_level / 4095) * 100).toFixed(2)}%
+                    {Math.min((soilMoisture.moisture_level - 4095) / -10, 100).toFixed(2)}%
                   </div>
                   <div className='text-xs text-gray-600'>{timeAgo(soilMoisture.timestamp)}</div>
                 </div>
-                <Progress value={100 - (soilMoisture.moisture_level / 4095) * 100} className='mt-2' />
+                <Progress value={Math.min((soilMoisture.moisture_level - 4095) / -10, 100)} className='mt-2' />
               </>
             ) : (
               <div>Loading...</div>
@@ -168,7 +167,10 @@ export default function Dashboard() {
             <Card>
               <CardHeader className='flex flex-row justify-between space-y-0 pb-2'>
                 <CardTitle className='text-sm font-medium'>Current Weather</CardTitle>
-                <img src={`https://raw.githubusercontent.com/visualcrossing/WeatherIcons/main/PNG/2nd%20Set%20-%20Color/${weather.icon}.png`} className='h-10 w-10 text-muted-foreground' />
+                <img
+                  src={`https://raw.githubusercontent.com/visualcrossing/WeatherIcons/main/PNG/2nd%20Set%20-%20Color/${weather.icon}.png`}
+                  className='h-10 w-10 text-muted-foreground'
+                />
               </CardHeader>
               <CardContent className='text-left'>
                 <div>
@@ -187,7 +189,10 @@ export default function Dashboard() {
                 The current weather in update using the Visual Crossing Weather API.
               </DialogDescription>
               <div className='flex gap-4 py-4 items-center '>
-                <img src={`https://raw.githubusercontent.com/visualcrossing/WeatherIcons/main/PNG/2nd%20Set%20-%20Color/${weather.icon}.png`} className='h-20 w-20 text-muted-foreground' />
+                <img
+                  src={`https://raw.githubusercontent.com/visualcrossing/WeatherIcons/main/PNG/2nd%20Set%20-%20Color/${weather.icon}.png`}
+                  className='h-20 w-20 text-muted-foreground'
+                />
                 <div>
                   <div className='font-bold'>{weather.address}</div>
                   <div className='text-2xl font-bold'>{weather.temp}°F</div>

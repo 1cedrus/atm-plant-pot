@@ -1,7 +1,6 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
@@ -47,6 +46,8 @@ export default function WateringModeCard() {
     queryKey: [WateringMode.Automatic],
     queryFn: async () => {
       const res = (await getWateringModeSettings(WateringMode.Automatic)) as AutomaticSettings;
+
+      res.threshold = Math.trunc((res.threshold! - 4095) / -10);
 
       setThreshold(res.threshold);
       setDuration(res.duration);
@@ -109,7 +110,15 @@ export default function WateringModeCard() {
                 />
                 {mode === WateringMode.Automatic && threshold !== automationSettings?.threshold && (
                   <>
-                    <Button onClick={() => updateSettingsMutation.mutate({ threshold, duration })}>Set</Button>
+                    <Button
+                      onClick={() =>
+                        updateSettingsMutation.mutate({
+                          threshold: 4095 - 10 * (threshold || 0),
+                          duration,
+                        })
+                      }>
+                      Set
+                    </Button>
                     <Button variant='outline' onClick={() => setThreshold(automationSettings?.threshold)}>
                       Reset
                     </Button>
