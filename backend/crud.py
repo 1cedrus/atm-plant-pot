@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.testing.plugin.plugin_base import config
 
 from database.database import get_db
-from models.models import Plant, MoistureReading, Config, Led, Watering, WaterLevel, Watering_Schedule, Weather
+from models.models import Plant, MoistureReading, Config, Led, Watering, WaterLevel, Watering_Schedule, Weather, ExpoToken
 from schemas.mqtt_rq_schemas import WaterShedule
 from schemas.schemas import PlantCreate, MoistureReadingCreate, ConfigCreate, LedCreate
 from schemas import schemas
@@ -125,3 +125,16 @@ def delete_watering_schedule(db: Session, schedule_id: int):
 
 def get_weather(db: Session):
     return db.query(Weather).order_by(Weather.datetime.desc()).first()
+
+def create_expo_token(db: Session, token: str):
+    exist_token = db.query(ExpoToken).filter(ExpoToken.token==token).first()
+    if not exist_token:
+        exist_token = ExpoToken(token=token)
+        db.add(exist_token)
+        db.commit()
+        db.refresh(exist_token)
+    return exist_token
+
+def get_all_token(db: Session):
+    all_token = db.query(ExpoToken).all()
+    return all_token

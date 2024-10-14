@@ -158,3 +158,12 @@ class Weather(Base):
             "solarradiation": self.solarradiation,
             "icon": self.icon
         }
+
+class ExpoToken(Base):
+    __tablename__ = "expo_token"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String)
+
+    def __str__(self):
+        return self.token

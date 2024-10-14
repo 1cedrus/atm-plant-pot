@@ -68,17 +68,17 @@ dynamic_filters = true
 #     max_inflight_count = 100
 #     max_inflight_size = 1024
 
-[v5.1]
-name = "v5-1"
-listen = "0.0.0.0:1884"
-next_connection_delay_ms = 1
-[v5.1.connections]
-connection_timeout_ms = 60000
-max_payload_size = 20480
-max_inflight_count = 100
-[v5.1.connections.auth]
-user1 = "p@ssw0rd"
-user2 = "password123"
+#[v5.1]
+#name = "v5-1"
+#listen = "0.0.0.0:1884"
+#next_connection_delay_ms = 1
+#[v5.1.connections]
+#connection_timeout_ms = 60000
+#max_payload_size = 20480
+#max_inflight_count = 100
+#[v5.1.connections.auth]
+#user1 = "p@ssw0rd"
+#user2 = "password123"
 
 [prometheus]
 listen = "127.0.0.1:9042"
