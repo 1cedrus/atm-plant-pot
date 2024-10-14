@@ -1,3 +1,5 @@
+from shlex import quote
+
 from fastapi import APIRouter, Depends, HTTPException
 from pyexpat.errors import messages
 from sqlalchemy.orm import Session
@@ -75,7 +77,7 @@ def water_level_data(request: str):
         if request == "1":
             all_token = get_all_token(db)
             for token in all_token:
-                simple_send_push_message(token=str(token.token), title="Water tank is below 30%", message="Please refill")
+                simple_send_push_message(token=str(token.token), title="Water tank is below 30%", message="Please refill water tank to avoid plant dehydration")
         print(f"Water level data : {request}")
 
 
@@ -129,21 +131,46 @@ def start_raining():
             print("stop raining")
 
 
-def calculate_rgb_brightness():
-    from zoneinfo import ZoneInfo
-    now = datetime.now(ZoneInfo("Asia/Bangkok"))
-    hour = now.hour
+def calculate_rgb_brightness(hour: int, cloud_cover: int = 0):
+    print("calculate rgb brightness for ", hour, "h")
 
-    # Giả lập tính toán màu sắc RGB và độ sáng dựa trên giờ
-    if 6 <= hour <= 18:  # Ban ngày
-        r = int(255 * (1 - abs(12 - hour) / 6))  # Giảm dần từ sáng đến tối
-        g = int(255 * (1 - abs(12 - hour) / 6))
-        b = int(150 * (1 - abs(12 - hour) / 6))  # Màu xanh dương nhạt
-        brightness = int(255 * (1 - abs(12 - hour) / 6))
+    if 6 <= hour <= 8:  # Sáng sớm
+        r = int(255 * (hour - 6) / 2)  # Từ 0 đến 255
+        g = int(255 * (hour - 6) / 2)  # Từ 0 đến 255
+        b = int(255)
+
+    elif 9 <= hour <= 11:  # Buổi sáng
+        r = 255  # Màu vàng tăng dần
+        g = int(abs(255 - (hour - 9) * 50))  # Giảm từ 255 đến 155
+        b = int(abs(150 - (hour - 9) * 75))  # Giảm từ 150 đến 0
+
+    elif hour == 12:  # Giữa trưa
+        r, g, b = 255, 154, 7  # Màu vàng đậm mô phỏng nắng gắt
+
+    elif 13 <= hour <= 17:  # Buổi chiều
+        r = 255
+        g = int(abs(154 - (hour - 12) * 48))  # Giảm từ 154 đến 0
+        b = int(abs(7 - (hour - 12) * 1.4))  # Giảm từ 7 đến 0
+
     else:  # Ban đêm
-        r, g, b, brightness = 0, 0, 0, 0  # Tắt đèn vào ban đêm
+        r, g, b = 255, 255, 255  # Tắt đèn vào ban đêm
 
+    # Độ sáng được tính bằng cách lấy giá trị trung bình của RGB để điều chỉnh độ rực của ánh sáng
+    if 6 <= hour <= 17:
+        brightness = int((r + g + b) / 3)
+    elif 19 <= hour <= 23:
+        brightness = 255 * (hour - 19) / 6
+    elif 0 <= hour <= 4:
+        brightness = 255 * (4 - hour) / 6
+    else:
+        brightness = 0
+
+    # Điều chỉnh độ sáng dựa trên độ che phủ mây
+    brightness = int(brightness * (100 - cloud_cover/2) / 100)
+
+    print(f"RGB: {r}, {g}, {b}, brightness: {brightness}")
     return r, g, b, brightness
+
 
 def start_led():
     with get_db_other() as db:
@@ -152,7 +179,7 @@ def start_led():
         conditions = [x.strip() for x in str_conditions.split(",")]
         leds = db.query(Led).all()
         if leds:
-            r, g, b, brightness = calculate_rgb_brightness()
+            r, g, b, brightness = calculate_rgb_brightness(weather.datetime.hour, int(weather.cloudcover))
             iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value),
                         f"1,{str(r)},{str(g)},{str(b)},{str(brightness)},{str(topic.ALedMode.ON.value)}")
             if any(c in ["type_18", "type_37", "type_38", "type_22", "type_24", "type_25"] for c in conditions):
@@ -165,7 +192,6 @@ def start_led():
                     print(f"stop led {leds[i].id}")
 
 async def real_time_weather():
-    print("real time weather")
     with get_db_other() as db:
         config = db.query(Config).first()
         if config.mode == topic.WateringMode.REALTIME.value:
@@ -182,15 +208,16 @@ async def automatic_setting(request: AutomacticSetting, config: Config = Depends
     watering.watering_threshold = request.threshold
     watering.watering_duration = request.duration
     db.commit()
-    iot.publish(str(topic.Topic.AUTOMATIC_TOPIC.value), str(request.threshold) + ";" + str(request.duration))
+    iot.publish(str(topic.Topic.AUTOMATIC_TOPIC.value), str(request.threshold) + "," + str(request.duration))
     await manager.broadcast_json({"type": "automatic"})
-    return {"response": "set threshold and duration : " + str(request.threshold) + ";" + str(request.duration)}
+    return {"response": "set threshold and duration : " + str(request.threshold) + "," + str(request.duration)}
 
 
 @router.post("/watering-mode", tags=["update watering mode"])
 async def update_watering_mode(request: UpdateWateringMode, config: Config = Depends(pin_authenticate), db: Session = Depends(get_db)):
     config.mode = request.mode
     db.commit()
+    iot.publish(str(topic.Topic.WATER_PUMP_TOPIC.value), str(topic.Watering.OFF.value))
     if request.mode == topic.WateringMode.MANUAL.value:
         pass
     # iot.publish(str(topic.Topic.SETTINGS_TOPIC.value), "0" if request.mode == topic.WateringMode.MANUAL.value else "1")
@@ -217,7 +244,7 @@ async def update_led_mode(request: UpdateLedMode, config: Config = Depends(pin_a
         elif request.mode == topic.LedMode.OFF.value:
             for led in leds:
                 # led.state = topic.ALedMode.OFF.value
-                iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value), f"{str(led.id)},{str(led.red)},{str(led.green)},{str(led.blue)},{str(led.brightness)},{str(topic.LedMode.OFF.value)}")
+                iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value), f"{str(led.id)},{str(led.red)},{str(led.green)},{str(led.blue)},{str(led.brightness)},{str(topic.ALedMode.OFF.value)}")
         else:
             for led in leds:
                 iot.publish(str(topic.Topic.LED_CUSTOM_TOPIC.value), f"{str(led.id)},{str(led.red)},{str(led.green)},{str(led.blue)},{str(led.brightness)},{str(led.state)}")
