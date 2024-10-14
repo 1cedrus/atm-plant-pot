@@ -75,7 +75,7 @@ export default function LedControlCard() {
   }, [settings, ledMode]);
 
   return (
-    <Card className='flex flex-col'>
+    <Card className={`flex flex-col ${updateLEDModeMutation.isPending ? 'blur-sm pointer-events-none' : ''} `}>
       <CardHeader>
         <CardDescription>Control LEDs state based on your perferences</CardDescription>
       </CardHeader>
@@ -178,7 +178,7 @@ export default function LedControlCard() {
           )}
         </form>
       </CardContent>
-      <CardFooter className='flex justify-between'>
+      <CardFooter className='flex gap-4'>
         {selectedLED &&
           (selectedLED.state !== settings[selectedLED.id].state ||
             selectedLED.red !== settings[selectedLED.id].red ||
@@ -189,7 +189,7 @@ export default function LedControlCard() {
               <Button variant='outline' onClick={() => selectLED(selectedLED.id)}>
                 Reset
               </Button>
-              <Button onClick={() => updateLEDMutation.mutate(selectedLED)}>Save</Button>
+              <Button className='w-32' disabled={updateLEDMutation.isPending} onClick={() => updateLEDMutation.mutate(selectedLED)}>{updateLEDMutation.isPending ? 'Saving...' : 'Save'}</Button>
             </>
           )}
       </CardFooter>

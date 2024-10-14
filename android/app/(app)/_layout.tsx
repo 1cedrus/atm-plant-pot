@@ -7,6 +7,7 @@ import {
   DrawerContentComponentProps,
   DrawerItemList,
 } from "@react-navigation/drawer";
+import { Backdrop, BackdropProvider } from "@/components/Backdrop";
 
 export default function AppLayout() {
   const { isLoading, session } = useSession();
@@ -21,50 +22,52 @@ export default function AppLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Drawer
-        drawerContent={(props) => <CustomDrawerContent {...props} />}
-        screenOptions={{
-          headerTitleStyle: { fontSize: 24, fontWeight: "bold" },
-          drawerActiveTintColor: "white", // Active tab text color
-          drawerInactiveTintColor: "gray", // Inactive tab text color
-          drawerActiveBackgroundColor: "#333", // Active tab background color
-          drawerLabelStyle: {
-            fontSize: 16, // Customize text size if needed
-          },
-        }}
-      >
-        <Drawer.Screen
-          name="index" // This is the name of the page and must match the url from root
-          options={{
-            drawerLabel: "Dashboard 💻",
-            title: "Dashboard 💻",
+    <BackdropProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Drawer
+          drawerContent={(props) => <CustomDrawerContent {...props} />}
+          screenOptions={{
+            headerTitleStyle: { fontSize: 24, fontWeight: "bold" },
+            drawerActiveTintColor: "white", // Active tab text color
+            drawerInactiveTintColor: "gray", // Inactive tab text color
+            drawerActiveBackgroundColor: "#333", // Active tab background color
+            drawerLabelStyle: {
+              fontSize: 16, // Customize text size if needed
+            },
           }}
-        />
-        <Drawer.Screen
-          name="watering-mode" // This is the name of the page and must match the url from root
-          options={{
-            drawerLabel: "Watering mode 💦",
-            title: "Watering mode 💦",
-          }}
-        />
-        <Drawer.Screen
-          name="led-controller" // This is the name of the page and must match the url from root
-          options={{
-            drawerLabel: "LED Controller 🌈",
-            title: "LED Controller 🌈",
-          }}
-        />
-        <Drawer.Screen
-          name="settings" // This is the name of the page and must match the url from root
-          options={{
-            drawerLabel: "Settings ⚙️",
-            title: "Settings ⚙️",
-          }}
-        />
-      </Drawer>
-      <StatusBar barStyle="dark-content" />
-    </GestureHandlerRootView>
+        >
+          <Drawer.Screen
+            name="index" // This is the name of the page and must match the url from root
+            options={{
+              drawerLabel: "Dashboard 💻",
+              title: "Dashboard 💻",
+            }}
+          />
+          <Drawer.Screen
+            name="watering-mode" // This is the name of the page and must match the url from root
+            options={{
+              drawerLabel: "Watering mode 💦",
+              title: "Watering mode 💦",
+            }}
+          />
+          <Drawer.Screen
+            name="led-controller" // This is the name of the page and must match the url from root
+            options={{
+              drawerLabel: "LED Controller 🌈",
+              title: "LED Controller 🌈",
+            }}
+          />
+          <Drawer.Screen
+            name="settings" // This is the name of the page and must match the url from root
+            options={{
+              drawerLabel: "Settings ⚙️",
+              title: "Settings ⚙️",
+            }}
+          />
+        </Drawer>
+        <StatusBar barStyle="dark-content" />
+      </GestureHandlerRootView>
+    </BackdropProvider>
   );
 }
 

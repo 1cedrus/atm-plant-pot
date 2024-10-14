@@ -69,7 +69,7 @@ export default function ReminderCard({ reminder, isDisabled }: ReminderCardProps
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <div className=' flex items-center space-x-4 rounded-md border p-4 w-full hover:shadow cursor-pointer'>
+        <div className={`flex items-center space-x-4 rounded-md border p-4 w-full hover:shadow cursor-pointer ${isDisabled ? 'pointer-events-none' : ''} ${updateReminderMutation.isPending ? 'blur-sm pointer-events-none' : ''}`}>
           <div className='flex-1 space-y-1'>
             <p className='text-sm font-medium leading-none'>Time: {dayjs(reminder.time).format('hh:mm A')}</p>
             <p className='text-sm text-muted-foreground'>Duration: {reminder.duration}s</p>

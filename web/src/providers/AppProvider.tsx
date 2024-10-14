@@ -1,6 +1,7 @@
 import { WebSocketEvent } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useEffect } from 'react';
+import { useAuthority } from './AuthenticationProvider';
 
 type AppProviderProps = {
   children: React.ReactNode;
@@ -8,18 +9,18 @@ type AppProviderProps = {
 
 type AppProviderState = {};
 
-const initialState: AppProviderState = {
-  theme: 'system',
-  setTheme: () => null,
-};
+const initialState: AppProviderState = {};
 
 const AppProviderContext = createContext<AppProviderState>(initialState);
 
 export function AppProvider({ children }: AppProviderProps) {
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuthority();
 
   useEffect(() => {
-    const websocket = new WebSocket(import.meta.env.VITE_WS_URL as string);
+    if (!isAuthenticated) return;
+
+    const websocket = new WebSocket(localStorage.getItem('ws') || 'ws://localhost:8000/ws/0');
 
     websocket.onopen = () => {
       console.log('WebSocket connection established');
@@ -28,6 +29,7 @@ export function AppProvider({ children }: AppProviderProps) {
     websocket.onmessage = (event) => {
       const data = JSON.parse(event.data) as WebSocketEvent;
       const queryKey = [data.type];
+
       queryClient.invalidateQueries({ queryKey });
     };
 
@@ -38,7 +40,7 @@ export function AppProvider({ children }: AppProviderProps) {
     return () => {
       websocket.close();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   return <AppProviderContext.Provider value={{}}>{children}</AppProviderContext.Provider>;
 }

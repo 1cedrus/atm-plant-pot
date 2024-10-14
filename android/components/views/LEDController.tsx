@@ -14,6 +14,7 @@ import {
 } from "@/apis";
 import RadioGroup from "react-native-radio-buttons-group";
 import { useBackdrop } from "../Backdrop";
+import { useExpoRouter } from "expo-router/build/global-state/router-store";
 
 export default function LEDController() {
   const [brightness, setBrightness] = useState<number>(0);
@@ -113,8 +114,12 @@ export default function LEDController() {
   }, [ledMode, settings]);
 
   const selectLED = (id: number) => {
-    setSelectedLED(settings![id]);
-    setBrightness(settings![id].brightness);
+    if (id === 0) {
+      setSelectedLED(undefined);
+    } else {
+      setSelectedLED(settings![id]);
+      setBrightness(settings![id].brightness);
+    }
   };
 
   return (
@@ -142,6 +147,7 @@ export default function LEDController() {
                 onValueChange={selectLED}
                 placeholder="Select a LED"
               >
+                <Picker.Item label={"Choose one"} value={0} />
                 <Picker.Item label={"LED 1"} value={1} />
                 <Picker.Item label={"LED 2"} value={2} />
                 <Picker.Item label={"LED 3"} value={3} />
@@ -153,12 +159,13 @@ export default function LEDController() {
                   <Text style={{ fontWeight: 700 }}>State</Text>
                   <Picker
                     selectedValue={selectedLED?.state}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
+                      if (value === selectedLED.state) return;
                       updateLEDMutation.mutate({
                         ...selectedLED,
                         state: value,
-                      })
-                    }
+                      });
+                    }}
                   >
                     <Picker.Item label="On" value={LEDState.On} />
                     <Picker.Item label="Starlight" value={LEDState.Starlight} />
@@ -281,7 +288,10 @@ function ColorController({
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <View
-            style={{ flexDirection: "row", justifyContent: "space-between" }}
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
           >
             <Text style={styles.cardTitle}>Pick colorrs</Text>
             <Pressable onPress={() => setModalVisible(false)}>

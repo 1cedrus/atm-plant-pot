@@ -27,6 +27,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
     // Set the Authorization header for all axios requests
     axios.defaults.headers.common['Authorization'] = authToken ? `Bearer ${authToken}` : '';
+
   }, [authToken]);
 
   const logout = () => {
