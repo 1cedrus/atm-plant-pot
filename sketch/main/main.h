@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define PUBLISH_SOIL_MOISTURE_DURATION 2000 
+#define PUBLISH_SOIL_MOISTURE_DURATION 4095 - 475 
 #define PUBLISH_WATER_LEVEL_DURATION 5000
 #define SOIL_MOISTURE_PIN 9
 #define WATER_LEVEL_PIN 10
@@ -39,7 +39,8 @@ const char* CONNECTED_TOPIC = "cmnd/connected";
 
 enum Mode {
   MANUAL,
-  AUTOMATIC
+  AUTOMATIC,
+  REALTIME,
 };
 
 const char DELIMITER = ',';

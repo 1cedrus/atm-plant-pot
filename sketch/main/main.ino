@@ -11,8 +11,8 @@
 #include "led.h"
 
 LED sun({5, 6, 7});
-LED cloud_1({15, 16, 17});
-LED cloud_2({35, 36, 37});
+LED cloud_1({16, 17, 18});
+LED cloud_2({36, 37, 38});
 
 Threshold toWater = DEFAULT_THRESHOLD;
 Duration timeToWater = DEFAULT_DURATION;
@@ -49,12 +49,11 @@ void setup() {
   client.subscribe(WATER_PUMP_TOPIC, 1);
   client.subscribe(MODE_TOPIC, 1);
   client.subscribe(AUTOMATIC_TOPIC, 1);
-  client.publish(CONNECTED_TOPIC, "HELLOWORLD", 10);
 
   xTaskCreatePinnedToCore(publishSoilMoisture, "PublishSoilMoisture", 2048, NULL, 1, NULL, 0);
   xTaskCreatePinnedToCore(publishWaterLevel, "PublisWaterLevel", 2048, NULL, 1, NULL, 0);
   xTaskCreatePinnedToCore(messageProcessor, "MessageProcessor", 4095, NULL, 2, NULL, 0);
-  xTaskCreatePinnedToCore(mqttLoopTask, "MqttLoop", 2048, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(mqttLoopTask, "MqttLoop", 4095, NULL, 1, NULL, 1);
   xTaskCreate(
     [](void* pvParameters) {
         LED* led = static_cast<LED*>(pvParameters);
@@ -89,6 +88,7 @@ void setup() {
     NULL
   );
 
+  client.publish(CONNECTED_TOPIC, "HELLOWORLD", 10);
   Serial.print("\n[INFO]: Done setup!");
 }
 
@@ -174,7 +174,7 @@ void publishSoilMoisture(void *_pvParameters) {
 
     int nSoilMoisture = analogRead(SOIL_MOISTURE_PIN);
 
-    if (abs(nLastTimeUpdate - nSoilMoisture) > 100) {
+    if (abs(nLastTimeUpdate - nSoilMoisture) > 10) {
       itoa(nSoilMoisture, psSoilMoisture, 10);
       client.publish(SOIL_MOISTURE_TOPIC, psSoilMoisture, strlen(psSoilMoisture));
 
@@ -188,7 +188,7 @@ void publishSoilMoisture(void *_pvParameters) {
 }
 
 void publishWaterLevel(void *_pvParameters) {
-  bool bLastTimeUpdate = 0;
+  int bLastTimeUpdate = 0;
 
   while (true) {
     if (client.state() != MQTT_CONNECTED) {
@@ -196,10 +196,12 @@ void publishWaterLevel(void *_pvParameters) {
       continue;
     }
 
-    int bWaterLevel = analogRead(WATER_LEVEL_PIN);
+    int bWaterLevel = digitalRead(WATER_LEVEL_PIN);
 
     if (bLastTimeUpdate != bWaterLevel) {
       client.publish(WATER_LEVEL_TOPIC, bWaterLevel ? "1" : "0", 1);
+
+      Serial.printf("\n[INFO]: Publish %d", bWaterLevel);
 
       bLastTimeUpdate = bWaterLevel;
     }
@@ -211,11 +213,19 @@ void publishWaterLevel(void *_pvParameters) {
 void autoWater(void *_pvParameters) {
   while (true) {
     // Not put delay here on purpuse cuz this task get suspend when wateringMode == MANUAL
-    if (wateringMode != AUTOMATIC) continue;
+    if (wateringMode != AUTOMATIC) {
+      vTaskDelay(PUBLISH_SOIL_MOISTURE_DURATION / portTICK_PERIOD_MS); 
+
+      continue;
+    }
 
     int nSoilMoisture = analogRead(SOIL_MOISTURE_PIN);
 
-    digitalWrite(WATER_PUMP_PIN, nSoilMoisture < toWater ? HIGH : LOW);
+    if (nSoilMoisture >= toWater) {
+      digitalWrite(WATER_PUMP_PIN, HIGH);
+      vTaskDelay(timeToWater / portTICK_PERIOD_MS);
+      digitalWrite(WATER_PUMP_PIN, LOW);
+    }
 
     // TODO! Need a different value.
     vTaskDelay(PUBLISH_SOIL_MOISTURE_DURATION / portTICK_PERIOD_MS);  
@@ -238,6 +248,12 @@ void waterPump(int payload[], int payloadLength) {
   if (payloadLength != 1) {
     Serial.print("\n[ERROR]: Payload format is not correct!");
   } else {
+    if (wateringMode == AUTOMATIC && payload[0]) {
+      vTaskSuspend(autoWaterTask);
+    } else if (wateringMode == AUTOMATIC) {
+      vTaskResume(autoWaterTask);
+    }
+
     digitalWrite(WATER_PUMP_PIN, payload[0] ? HIGH : LOW);
   }
 }
@@ -247,7 +263,7 @@ void automatic(int payload[], int payloadLength) {
     Serial.print("\n[ERROR]: Payload format is not correct!");
   } else {
     toWater = static_cast<Threshold>(payload[0]);
-    timeToWater = static_cast<Duration>(payload[1]);
+    timeToWater = static_cast<Duration>(payload[1]) * 1000;
 
     preferences.begin("app", false);
     preferences.putUShort("threashold", toWater);
@@ -267,7 +283,9 @@ void mode(int payload[], int payloadLength) {
         vTaskResume(autoWaterTask);
         break;
       case MANUAL:
+      case REALTIME:
         vTaskSuspend(autoWaterTask);
+        digitalWrite(WATER_PUMP_PIN, LOW);
         break;
     }
   }
