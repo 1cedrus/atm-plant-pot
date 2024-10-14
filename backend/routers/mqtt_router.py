@@ -158,8 +158,8 @@ def calculate_rgb_brightness(hour: int, cloud_cover: int = 0):
     # Độ sáng được tính bằng cách lấy giá trị trung bình của RGB để điều chỉnh độ rực của ánh sáng
     if 6 <= hour <= 17:
         brightness = int((r + g + b) / 3)
-    elif 20 <= hour <= 23:
-        brightness = 255 * (hour - 20) / 6
+    elif 19 <= hour <= 23:
+        brightness = 255 * (hour - 19) / 6
     elif 0 <= hour <= 4:
         brightness = 255 * (4 - hour) / 6
     else:
