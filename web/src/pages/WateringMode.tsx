@@ -47,7 +47,7 @@ export default function WateringModeCard() {
     queryFn: async () => {
       const res = (await getWateringModeSettings(WateringMode.Automatic)) as AutomaticSettings;
 
-      res.threshold = Math.trunc((res.threshold! - 4095) / -10);
+      res.threshold = Math.trunc(Math.min((res.threshold! - 4095) / -10, 100));
 
       setThreshold(res.threshold);
       setDuration(res.duration);
@@ -132,7 +132,7 @@ export default function WateringModeCard() {
               <Select
                 disabled={mode !== WateringMode.Automatic}
                 value={duration?.toString()}
-                onValueChange={(value) => updateSettingsMutation.mutate({ threshold, duration: Number(value) })}>
+                onValueChange={(value) => updateSettingsMutation.mutate({ threshold: 4095 - 10 * (automationSettings?.threshold || 0), duration: Number(value) })}>
                 <SelectTrigger className='w-[180px]'>
                   <SelectValue placeholder='Duration' />
                 </SelectTrigger>
