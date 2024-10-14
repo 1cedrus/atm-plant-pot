@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  ToastAndroid,
   Pressable,
   ImageBackground,
 } from "react-native";
@@ -25,7 +24,6 @@ import {
   getWaterLevel,
   getWeather,
   stopWater,
-  updatePosition,
   water,
 } from "@/apis";
 import { timeAgo } from "@/time";
@@ -148,14 +146,17 @@ export default function Dashboard() {
                 }}
               >
                 <Text style={styles.dataText}>
-                  {((soilMoisture.moisture_level / 4095) * 100).toFixed(2)}%
+                  {(100 - (soilMoisture.moisture_level / 4095) * 100).toFixed(
+                    2
+                  )}
+                  %
                 </Text>
                 <Text style={{ color: "gray" }}>
                   {timeAgo(soilMoisture.timestamp)}
                 </Text>
               </View>
               <ProgressBar
-                progress={soilMoisture.moisture_level / 4095}
+                progress={((4095 - soilMoisture.moisture_level) / 4095)}
                 color={"#000"}
                 style={styles.progressBar}
               />
@@ -242,48 +243,51 @@ export default function Dashboard() {
               <Icon name="chart-line" size={24} color="black" />
             </View>
             <View>
-              {soilMoistureData && (
-                <LineChart
-                  data={{
-                    labels: soilMoistureData
-                      .slice(5, 10)
-                      .map((data) => data.timestamp),
-                    datasets: [
-                      {
-                        data: soilMoistureData
-                          .slice(5, 10)
-                          .map(
-                            (data) => data.moisture_level
-                          ) as any as number[],
+              {soilMoistureData &&
+                (soilMoistureData.length > 10 ? (
+                  <LineChart
+                    data={{
+                      labels: soilMoistureData
+                        .slice(5, 10)
+                        .map((data) => data.timestamp),
+                      datasets: [
+                        {
+                          data: soilMoistureData
+                            .slice(5, 10)
+                            .map(
+                              (data) => data.moisture_level
+                            ) as any as number[],
+                        },
+                      ],
+                    }}
+                    bezier
+                    width={screenWidth - 100} // from react-native
+                    height={220}
+                    yAxisSuffix="%"
+                    chartConfig={{
+                      backgroundColor: "#ffffff",
+                      backgroundGradientFrom: "#ffffff",
+                      backgroundGradientTo: "#ffffff",
+                      decimalPlaces: 1,
+                      color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                      labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                      style: {
+                        borderRadius: 16,
                       },
-                    ],
-                  }}
-                  bezier
-                  width={screenWidth - 100} // from react-native
-                  height={220}
-                  yAxisSuffix="%"
-                  chartConfig={{
-                    backgroundColor: "#ffffff",
-                    backgroundGradientFrom: "#ffffff",
-                    backgroundGradientTo: "#ffffff",
-                    decimalPlaces: 1,
-                    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                    style: {
+                      propsForDots: {
+                        r: "6",
+                        strokeWidth: "2",
+                        stroke: "#ffa726",
+                      },
+                    }}
+                    style={{
+                      marginVertical: 8,
                       borderRadius: 16,
-                    },
-                    propsForDots: {
-                      r: "6",
-                      strokeWidth: "2",
-                      stroke: "#ffa726",
-                    },
-                  }}
-                  style={{
-                    marginVertical: 8,
-                    borderRadius: 16,
-                  }}
-                />
-              )}
+                    }}
+                  />
+                ) : (
+                  <Text>Need more than 10 record to view statics</Text>
+                ))}
             </View>
           </View>
         </TouchableOpacity>
@@ -297,7 +301,7 @@ export default function Dashboard() {
             <Text style={styles.modalTitle}>
               Soil Moisture Statistics (Full Screen)
             </Text>
-            {soilMoistureData && (
+            {soilMoistureData && soilMoistureData.length > 10 && (
               <>
                 <LineChart
                   data={{
