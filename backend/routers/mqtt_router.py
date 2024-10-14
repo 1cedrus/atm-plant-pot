@@ -141,16 +141,16 @@ def calculate_rgb_brightness(hour: int, cloud_cover: int = 0):
 
     elif 9 <= hour <= 11:  # Buổi sáng
         r = 255  # Màu vàng tăng dần
-        g = int(255 - (hour - 9) * 50)  # Giảm từ 255 đến 155
-        b = int(150 - (hour - 9) * 75)  # Giảm từ 150 đến 0
+        g = int(abs(255 - (hour - 9) * 50))  # Giảm từ 255 đến 155
+        b = int(abs(150 - (hour - 9) * 75))  # Giảm từ 150 đến 0
 
     elif hour == 12:  # Giữa trưa
         r, g, b = 255, 154, 7  # Màu vàng đậm mô phỏng nắng gắt
 
     elif 13 <= hour <= 17:  # Buổi chiều
         r = 255
-        g = int(154 - (hour - 12) * 48)  # Giảm từ 154 đến 0
-        b = int(7 - (hour - 12) * 1.4)  # Giảm từ 7 đến 0
+        g = int(abs(154 - (hour - 12) * 48))  # Giảm từ 154 đến 0
+        b = int(abs(7 - (hour - 12) * 1.4))  # Giảm từ 7 đến 0
 
     else:  # Ban đêm
         r, g, b = 255, 255, 255  # Tắt đèn vào ban đêm
@@ -166,7 +166,7 @@ def calculate_rgb_brightness(hour: int, cloud_cover: int = 0):
         brightness = 0
 
     # Điều chỉnh độ sáng dựa trên độ che phủ mây
-    brightness = int(brightness * (100 - cloud_cover) / 100)
+    brightness = int(brightness * (100 - cloud_cover/2) / 100)
 
     print(f"RGB: {r}, {g}, {b}, brightness: {brightness}")
     return r, g, b, brightness
